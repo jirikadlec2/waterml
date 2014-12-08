@@ -1,36 +1,41 @@
 #' GetValues
-#' 
+#'
 #' This function gets the time series data values from the WaterML web service
+#'
+#' @import XML
+#' @importFrom RCurl getURL
 #' @param server The URL of the web service ending with .asmx,
-#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/cuahsi_1_1.asmx
+#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
 #' @param site The site code. To get a list of available site codes, see GetSites() function
 #' @param variable The variable code. To get a list of possible variable codes, see GetVariables()
 #' @param startDate The start date in "yyyy-mm-dd" format
 #' @param endDate The end date in "yyyy-mm-dd" format
-#' @param daily. Defaults to NULL. If you set daily="max", daily="min" or daily="mean", then the 
+#' @param daily Defaults to NULL. If you set daily="max", daily="min" or daily="mean", then the
 #' data values are aggreagted to daily time step.
 #' @keywords waterml
 #' @export
 #' @examples
-#' GetValues()
+#' GetValues("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx",
+#'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-21",
+#'            daily="max")
 
 GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
   base_url <- paste(server, "/GetValuesObject", sep="")
-  network = "WWO" 
-  url = paste(base_url, "?location=", network, ":", site, 
+  network = "WWO"
+  url = paste(base_url, "?location=", network, ":", site,
               "&variable=", network, ":", variable, sep="",
               "&startDate=",startDate, "&endDate=",endDate)
   print(url)
-  
-  text = getURL(url)
+
+  text = RCurl::getURL(url)
   doc = xmlRoot(xmlTreeParse(text, getDTD=FALSE, useInternalNodes = TRUE))
-  
+
   variable <- xmlToList(doc[[2]][[2]])
   noData <- as.numeric(variable$noDataValue)
-  
-  
+
+
   vals <- doc[[2]][[3]]
-  
+
   if (is.null(vals)){
     print(paste("no data values found:", url))
     return(NULL)
@@ -39,7 +44,7 @@ GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
     print(paste("no data values found:", url))
     return(NULL)
   }
-  
+
   valCount = xmlSize(vals)
   print(paste("valCount:", valCount))
   xmNames = xmlSApply(vals, xmlName)
@@ -51,16 +56,16 @@ GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
       val <- c(val, as.numeric(xmlValue(vals[[j]])))
     }
   }
-  
+
   print(length(val))
   if (length(val) == 0) {
     return (NULL)
   }
-  
-  
+
+
   df <- data.frame("time"=as.POSIXct(dt), "DataValue"=val)
   df[df$DataValue == noData,2] <- NA
-  
+
   if (!is.null(daily)) {
     validdata <- na.omit(df)
     if (nrow(validdata) == 0) {
@@ -80,6 +85,6 @@ GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
       return(dailyMean)
     }
   }
-  
+
   return(df)
 }

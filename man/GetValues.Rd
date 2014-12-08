@@ -8,7 +8,7 @@ GetValues(server, site, variable, startDate, endDate, daily = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .asmx,
-for example: http://worldwater.byu.edu/interactive/rushvalley/services/cuahsi_1_1.asmx}
+for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx}
 
 \item{site}{The site code. To get a list of available site codes, see GetSites() function}
 
@@ -18,14 +18,16 @@ for example: http://worldwater.byu.edu/interactive/rushvalley/services/cuahsi_1_
 
 \item{endDate}{The end date in "yyyy-mm-dd" format}
 
-\item{daily.}{Defaults to NULL. If you set daily="max", daily="min" or daily="mean", then the
+\item{daily}{Defaults to NULL. If you set daily="max", daily="min" or daily="mean", then the
 data values are aggreagted to daily time step.}
 }
 \description{
 This function gets the time series data values from the WaterML web service
 }
 \examples{
-GetValues()
+GetValues("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx",
+           site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-21",
+           daily="max")
 }
 \keyword{waterml}
 

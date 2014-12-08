@@ -3,3 +3,5 @@
 export(GetSites)
 export(GetValues)
 export(GetVariables)
+import(XML)
+importFrom(RCurl,getURL)

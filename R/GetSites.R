@@ -1,25 +1,28 @@
 #' GetSites
-#' 
+#'
 #' This function gets the table of sites from the WaterML web service
+#'
+#' @import XML
+#' @importFrom RCurl getURL
 #' @param server The URL of the web service ending with .asmx,
-#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/cuahsi_1_1.asmx
+#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
 #' @keywords waterml
 #' @export
 #' @examples
-#' GetSites("http://worldwater.byu.edu/interactive/rushvalley/services/cuahsi_1_1.asmx")
+#' GetSites("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx")
 
 GetSites <- function(server) {
   sites_url <- paste(server, "/GetSitesObject", sep="")
-  text <- getURL(sites_url)
+  text <- RCurl::getURL(sites_url)
   doc <- xmlRoot(xmlTreeParse(text, getDTD=FALSE, useInternalNodes = TRUE))
   N <- xmlSize(doc) - 1 #because first element is queryInfo
-  
-  df <- data.frame(SiteName=rep("",N), SiteCode=rep("",N), Latitude=rep(NA,N), 
+
+  df <- data.frame(SiteName=rep("",N), SiteCode=rep("",N), Latitude=rep(NA,N),
                    Longitude=rep(NA,N), Elevation=rep(NA,N),State=rep("",N),
                    County=rep("",N), Comments=rep("",N), stringsAsFactors=FALSE)
-  
+
   for(i in 1:N){
-    
+
     siteInfo <- doc[[i+1]][[1]]
     siteList <- xmlToList(siteInfo)
     siteName <- siteList$siteName
@@ -30,17 +33,17 @@ GetSites <- function(server) {
     comments <- NA
     state <- NA
     county <- NA
-    
+
     numElements <- xmlSize(siteInfo)
     for (j in 1: numElements){
       element <- siteInfo[[j]]
-      
+
       if (is.null(element)) {
         print ('element is null!')
         next
       }
       if (xmlName(element) != 'siteProperty') next
-      
+
       attr <- xmlAttrs(element)["name"]
       if (attr == 'SiteComments') {
         comments <- xmlValue(element)
@@ -50,7 +53,7 @@ GetSites <- function(server) {
       }
       if (attr == 'County') {
         county <- xmlValue(element)
-      }     
+      }
     }
     df$SiteName[i] <- siteName
     df$SiteCode[i] <- siteCode
