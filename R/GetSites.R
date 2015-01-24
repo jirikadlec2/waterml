@@ -3,7 +3,6 @@
 #' This function gets the table of sites from the WaterML web service
 #'
 #' @import XML
-#' @importFrom RCurl getURL
 #' @param server The URL of the web service ending with .asmx,
 #'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
 #' @keywords waterml
@@ -13,8 +12,7 @@
 
 GetSites <- function(server) {
   sites_url <- paste(server, "/GetSitesObject", sep="")
-  text <- RCurl::getURL(sites_url)
-  doc <- xmlRoot(xmlTreeParse(text, getDTD=FALSE, useInternalNodes = TRUE))
+  doc <- xmlRoot(xmlTreeParse(sites_url, getDTD=FALSE, useInternalNodes = TRUE))
   N <- xmlSize(doc) - 1 #because first element is queryInfo
 
   df <- data.frame(SiteName=rep("",N), SiteCode=rep("",N), Latitude=rep(NA,N),

@@ -3,7 +3,6 @@
 #' This function gets the time series data values from the WaterML web service
 #'
 #' @import XML
-#' @importFrom RCurl getURL
 #' @param server The URL of the web service ending with .asmx,
 #'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
 #' @param site The site code. To get a list of available site codes, see GetSites() function
@@ -25,10 +24,8 @@ GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
   url = paste(base_url, "?location=", network, ":", site,
               "&variable=", network, ":", variable, sep="",
               "&startDate=",startDate, "&endDate=",endDate)
-  print(url)
 
-  text = RCurl::getURL(url)
-  doc = xmlRoot(xmlTreeParse(text, getDTD=FALSE, useInternalNodes = TRUE))
+  doc = xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
 
   variable <- xmlToList(doc[[2]][[2]])
   noData <- as.numeric(variable$noDataValue)

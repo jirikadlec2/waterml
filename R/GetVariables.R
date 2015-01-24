@@ -3,7 +3,6 @@
 #' This function gets the table of variables from the WaterML web service
 #'
 #' @import XML
-#' @importFrom RCurl getURL
 #' @param server The URL of the web service ending with .asmx,
 #'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
 #' @keywords waterml
@@ -13,8 +12,7 @@
 
 GetVariables <- function(server) {
   variables.url <- paste(server, "/GetVariablesObject", sep="")
-  text <- RCurl::getURL(variables.url)
-  doc <- xmlRoot(xmlTreeParse(text, getDTD=FALSE, useInternalNodes = TRUE))
+  doc <- xmlRoot(xmlTreeParse(variables.url, getDTD=FALSE, useInternalNodes = TRUE))
   vars <- doc[[2]]
   N <- xmlSize(vars)
   #define the columns
