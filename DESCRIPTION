@@ -1,16 +1,18 @@
 Package: waterml
 Title: Fetch and analyze data from CUAHSI WaterML web service
-Version: 0.4
+Version: 0.5.2
 Authors@R: "Jiri Kadlec <jirikadlec2@gmail.com> [aut, cre]"
 Description: The waterml package lets you connect to any CUAHSI WaterOneFlow
     web service from any hydroserver. To see list of available hydroservers,
-    see http: //hiscentral.cuahsi.org. The package has three functions:
-    GetVariables(): Show a data.frame with all variables on the server
-    GetSites(): Show a data.frame with all sites on the server. GetValues():
-    Given a site code, variable code, start time and endtime, fetch a
-    data.frame of all the data values. The data.frame has two columns: time and
-    DataValue. This function has an optional "daily" parameter you can set
-    daily="max", daily="min" or daily="mean" to get aggregated daily values.
+    see http: //hiscentral.cuahsi.org. The package has four functions:
+    GetServices(): show all public HydroServers from the HIS Central
+    HydroCatalog. GetVariables(): Show a data.frame with all variables on the
+    server. GetSites(): Show a data.frame with all sites on the server.
+    GetValues(): Given a site code, variable code, start time and endtime,
+    fetch a data.frame of all the data values. The data.frame has two columns:
+    time and DataValue. This function has an optional "daily" parameter you can
+    set daily="max", daily="min" or daily="mean" to get aggregated daily
+    values.
 Depends:
     R (>= 3.0.1)
 Imports:

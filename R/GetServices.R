@@ -3,7 +3,6 @@
 #' This function gets the table of web services from the HIS Central catalog
 #'
 #' @import XML
-#' @importFrom RCurl getURL
 #' @keywords waterml
 #' @export
 #' @examples
@@ -11,35 +10,35 @@
 
 GetServices <- function() {
   catalog = "http://hiscentral.cuahsi.org/webservices/hiscentral.asmx/GetWaterOneFlowServiceInfo"
-  text = RCurl::getURL(catalog)
-  doc <- xmlRoot(xmlTreeParse(text, getDTD=FALSE, useInternalNodes = TRUE))
-  N <- xmlSize(doc) - 1 #because first element is queryInfo
+  #text = RCurl::getURL(catalog)
+  doc <- xmlRoot(xmlTreeParse(catalog, getDTD=FALSE, useInternalNodes = TRUE))
+  N <- xmlSize(doc)
 
-  df <- data.frame(url=rep("",N), title=rep("",N), descriptionURL=rep("",N),
-                   organization=rep("",N), citation=rep("",N),abstract=rep("",N),
-                   valuecount=rep("",N), variablecount=rep("",N), sitecount=rep("",N),
-                   id=rep(NA,N), networkName=rep("",N), minLon=rep(NA,N),
-                   minLat=rep(NA,N), maxLon=rep(NA,N), maxLat=rep(NA,N),
-                   stringsAsFactors=FALSE)
+  colnames <- c("url","title","descriptionURL","organization","citation","abstract",
+                "valuecount","variablecount","sitecount","id","networkName",
+                "minLon","minLat","maxLon","maxLat")
+
+  m <- matrix(ncol=15, nrow=N, dimnames=list(NULL, colnames))
+  df <- as.data.frame(m)
 
   for(i in 1:N){
-
-    e <- doc[[i]]
-    df[i]$url <- e[["servURL"]]
-    df[i]$title <- e[["Title"]]
-    df[i]$descriptionURL <- e[["ServiceDescriptionURL"]]
-    df[i]$organization <- e[["organization"]]
-    df[i]$citation <- e[["citation"]]
-    df[i]$abstract <- e[["aabstract"]]
-    df[i]$valuecount <- e[["valuecount"]]
-    df[i]$sitecount <- e[["sitecount"]]
-    df[i]$id <- e[["ServiceID"]]
-    df[i]$networkName <- e[["NetworkName"]]
-    df[i]$minLon <- e[["minx"]]
-    df[i]$minLat <- e[["miny"]]
-    df[i]$maxLat <- e[["maxx"]]
-    df[i]$maxLon <- e[["maxy"]]
-
+    element <- xmlToList(doc[[i]])
+    #we replace NULL values with NA
+    e <- lapply(element, function(x) {ifelse(is.null(x), NA, x)})
+    df$url[i] <- e$servURL
+    df$title[i] <- e$Title
+    df$descriptionURL[i] <- e$ServiceDescriptionURL
+    df$organization[i] <- e$organization
+    df$citation[i] <- e$citation
+    df$abstract[i] <- e$aabstract
+    df$valuecount[i] <- e$valuecount
+    df$sitecount[i] <- e$sitecount
+    df$id[i] <- e$ServiceID
+    df$networkName[i] <- e$NetworkName
+    df$minLon[i] <- e$minx
+    df$minLat[i] <- e$miny
+    df$maxLat[i] <- e$maxx
+    df$maxLon[i] <- e$maxy
   }
   return(df)
 }
