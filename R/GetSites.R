@@ -17,7 +17,18 @@ GetSites <- function(server) {
   sites.url <- paste(base.url, "/GetSitesObject?site=&authToken=", sep="")
 
   print("fetching sites from server...")
-  doc <- xmlRoot(xmlTreeParse(sites.url, getDTD=FALSE, useInternalNodes = TRUE))
+  downloaded = FALSE
+  download <- tryCatch({
+    doc <- xmlRoot(xmlTreeParse(sites.url, getDTD=FALSE, useInternalNodes = TRUE))
+    downloaded = TRUE
+  }, error = function(err) {
+    print(paste("error fetching sites:", err))
+    doc <- NULL
+  })
+  if (!downloaded){
+    return(NULL)
+  }
+
   N <- xmlSize(doc) - 1 #because first element is queryInfo
 
   df <- data.frame(SiteName=rep("",N), SiteCode=rep("",N), FullSiteCode=rep("",N),
@@ -34,7 +45,12 @@ GetSites <- function(server) {
     fullSiteCode <- paste(siteList$siteCode$.attrs["network"], siteCode, sep=":")
     latitude <- as.numeric(siteList$geoLocation$geogLocation$latitude)
     longitude <- as.numeric(siteList$geoLocation$geogLocation$longitude)
-    elevation <- as.numeric(siteList$elevation_m)
+
+    elevation <- NA
+    if (!is.null(siteList$elevation_m)) {
+      elevation <- as.numeric(siteList$elevation_m)
+    }
+
     comments <- NA
     state <- NA
     county <- NA
