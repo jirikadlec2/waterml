@@ -5,8 +5,10 @@
 #' @import XML
 #' @param server The URL of the web service ending with .asmx,
 #'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
-#' @param site The site code. To get a list of available site codes, see GetSites() function
-#' @param variable The variable code. To get a list of possible variable codes, see GetVariables()
+#' @param siteCode The site code. To get a list of available site codes, see GetSites() function
+#'  and use the FullSiteCode field.
+#' @param variableCode The variable code. To get a list of possible variable codes, see GetVariables()
+#'  function and use the FullVariableCode field
 #' @param startDate The start date in "yyyy-mm-dd" format
 #' @param endDate The end date in "yyyy-mm-dd" format
 #' @param daily Defaults to NULL. If you set daily="max", daily="min" or daily="mean", then the
@@ -14,25 +16,51 @@
 #' @keywords waterml
 #' @export
 #' @examples
+#' #example 1: Get Values from a known site and variable from RushValley server
 #' GetValues("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx",
 #'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-21",
 #'            daily="max")
+#'
+#' #example 2: Get values from a random site and random variable
+#' server <- "http://hydrodata.info/chmi-h/cuahsi_1_1.asmx?wsdl"
+#' sites <- GetSites(server)
+#' randomSite <- sites[sample(nrow(sites),1),]
+#' variables <- GetVariables(server)
+#' randomVariable <- variables[sample(nrow(variables),1),]
+#' values <- GetValues(server, randomSite$FullSiteCode,
+#'           randomVariable$FullVariableCode, Sys.Date()-365, Sys.Date())
+#' if(!is.null(values)) {
+#'  plot(values, type="l", main=randomSite$SiteName,
+#'  ylab=paste(randomVariable$VariableName,
+#'  randomVariable$UnitAbbreviation))
+#' }
+#'
 
-GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
-  base_url <- paste(server, "/GetValuesObject", sep="")
-  network = "WWO"
-  url = paste(base_url, "?location=", network, ":", site,
-              "&variable=", network, ":", variable, sep="",
-              "&startDate=",startDate, "&endDate=",endDate)
+GetValues <- function(server, siteCode, variableCode, startDate, endDate, daily=NULL) {
+  m <- regexpr(".asmx", server)
+  base.url <- substr(server, 0, m+nchar(".asmx")-1)
+  values.url <- paste(base.url, "/GetValuesObject", sep="")
 
-  doc = xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
+  url = paste(values.url, "?location=", siteCode,
+              "&variable=", variableCode,
+              "&startDate=",startDate, "&endDate=",endDate, "&authToken=",
+              sep="")
+  print("fetching values from server...")
 
-  variable <- xmlToList(doc[[2]][[2]])
+  doc <- xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
+
+  variableElement <- doc[[2]][["variable"]]
+  if (is.null(variableElement)) {
+    print(paste("no data values found:", url))
+    return(NULL)
+  }
+  variable <- xmlToList(doc[[2]][["variable"]])
   noData <- as.numeric(variable$noDataValue)
 
 
-  vals <- doc[[2]][[3]]
+  vals <- doc[[2]][["values"]]
 
+  hasValues <- FALSE
   if (is.null(vals)){
     print(paste("no data values found:", url))
     return(NULL)
@@ -43,7 +71,6 @@ GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
   }
 
   valCount = xmlSize(vals)
-  print(paste("valCount:", valCount))
   xmNames = xmlSApply(vals, xmlName)
   val = c()
   dt = c()
@@ -54,9 +81,9 @@ GetValues <- function(server, site, variable, startDate, endDate, daily=NULL) {
     }
   }
 
-  print(length(val))
   if (length(val) == 0) {
-    return (NULL)
+    print(paste("no data values found:", url))
+    return(NULL)
   }
 
 

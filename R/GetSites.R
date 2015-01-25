@@ -11,13 +11,19 @@
 #' GetSites("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx")
 
 GetSites <- function(server) {
-  sites_url <- paste(server, "/GetSitesObject", sep="")
-  doc <- xmlRoot(xmlTreeParse(sites_url, getDTD=FALSE, useInternalNodes = TRUE))
+  #remove everything after .asmx
+  m <- regexpr(".asmx", server)
+  base.url <- substr(server, 0, m+nchar(".asmx")-1)
+  sites.url <- paste(base.url, "/GetSitesObject?site=&authToken=", sep="")
+
+  print("fetching sites from server...")
+  doc <- xmlRoot(xmlTreeParse(sites.url, getDTD=FALSE, useInternalNodes = TRUE))
   N <- xmlSize(doc) - 1 #because first element is queryInfo
 
-  df <- data.frame(SiteName=rep("",N), SiteCode=rep("",N), Latitude=rep(NA,N),
-                   Longitude=rep(NA,N), Elevation=rep(NA,N),State=rep("",N),
-                   County=rep("",N), Comments=rep("",N), stringsAsFactors=FALSE)
+  df <- data.frame(SiteName=rep("",N), SiteCode=rep("",N), FullSiteCode=rep("",N),
+                   Latitude=rep(NA,N), Longitude=rep(NA,N), Elevation=rep(NA,N),
+                   State=rep("",N), County=rep("",N), Comments=rep("",N),
+                   stringsAsFactors=FALSE)
 
   for(i in 1:N){
 
@@ -25,6 +31,7 @@ GetSites <- function(server) {
     siteList <- xmlToList(siteInfo)
     siteName <- siteList$siteName
     siteCode <- siteList$siteCode$text
+    fullSiteCode <- paste(siteList$siteCode$.attrs["network"], siteCode, sep=":")
     latitude <- as.numeric(siteList$geoLocation$geogLocation$latitude)
     longitude <- as.numeric(siteList$geoLocation$geogLocation$longitude)
     elevation <- as.numeric(siteList$elevation_m)
@@ -55,6 +62,7 @@ GetSites <- function(server) {
     }
     df$SiteName[i] <- siteName
     df$SiteCode[i] <- siteCode
+    df$FullSiteCode[i] <- fullSiteCode
     df$Latitude[i] <- latitude
     df$Longitude[i] <- longitude
     df$Elevation[i] <- elevation

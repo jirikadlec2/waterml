@@ -4,15 +4,17 @@
 \alias{GetValues}
 \title{GetValues}
 \usage{
-GetValues(server, site, variable, startDate, endDate, daily = NULL)
+GetValues(server, siteCode, variableCode, startDate, endDate, daily = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .asmx,
 for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx}
 
-\item{site}{The site code. To get a list of available site codes, see GetSites() function}
+\item{siteCode}{The site code. To get a list of available site codes, see GetSites() function
+and use the FullSiteCode field.}
 
-\item{variable}{The variable code. To get a list of possible variable codes, see GetVariables()}
+\item{variableCode}{The variable code. To get a list of possible variable codes, see GetVariables()
+function and use the FullVariableCode field}
 
 \item{startDate}{The start date in "yyyy-mm-dd" format}
 
@@ -25,9 +27,24 @@ data values are aggreagted to daily time step.}
 This function gets the time series data values from the WaterML web service
 }
 \examples{
+#example 1: Get Values from a known site and variable from RushValley server
 GetValues("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx",
            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-21",
            daily="max")
+
+#example 2: Get values from a random site and random variable
+server <- "http://hydrodata.info/chmi-h/cuahsi_1_1.asmx?wsdl"
+sites <- GetSites(server)
+randomSite <- sites[sample(nrow(sites),1),]
+variables <- GetVariables(server)
+randomVariable <- variables[sample(nrow(variables),1),]
+values <- GetValues(server, randomSite$FullSiteCode,
+          randomVariable$FullVariableCode, Sys.Date()-365, Sys.Date())
+if(!is.null(values)) {
+ plot(values, type="l", main=randomSite$SiteName,
+ ylab=paste(randomVariable$VariableName,
+ randomVariable$UnitAbbreviation))
+}
 }
 \keyword{waterml}
 

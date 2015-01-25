@@ -11,12 +11,16 @@
 #' GetVariables("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx")
 
 GetVariables <- function(server) {
-  variables.url <- paste(server, "/GetVariablesObject", sep="")
+  #remove everything after .asmx
+  m <- regexpr(".asmx", server)
+  base.url <- substr(server, 0, m+nchar(".asmx")-1)
+  variables.url <- paste(base.url, "/GetVariablesObject?authToken=", sep="")
   doc <- xmlRoot(xmlTreeParse(variables.url, getDTD=FALSE, useInternalNodes = TRUE))
   vars <- doc[[2]]
   N <- xmlSize(vars)
   #define the columns
-  df <- data.frame(VariableCode=rep("",N), VariableName=rep("",N), ValueType=rep("",N),
+  df <- data.frame(VariableCode=rep("",N), FullVariableCode=rep("",N),
+                   VariableName=rep("",N), ValueType=rep("",N),
                    DataType=rep("",N), GeneralCategory=rep("",N),SampleMedium=rep("",N),
                    UnitName=rep("",N), UnitType=rep("",N), UnitAbbreviation=rep("",N),
                    NoDataValue=rep(NA,N), IsRegular=rep("",N),
@@ -25,7 +29,9 @@ GetVariables <- function(server) {
   for(i in 1:N) {
     varObj <- vars[[i]]
     v <- xmlToList(varObj)
-    df$VariableCode[i] <- v$variableCode$text
+    varcode <- v$variableCode$text
+    df$VariableCode[i] <- varcode
+    df$FullVariableCode[i] <- paste(v$variableCode$.attrs["vocabulary"], varcode, sep=":")
     df$VariableName[i] <- v$variableName
     df$ValueType[i] <- v$valueType
     df$DataType[i] <- v$dataType
