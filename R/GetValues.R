@@ -18,7 +18,7 @@
 #' @examples
 #' #example 1: Get Values from a known site and variable from RushValley server
 #' GetValues("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx",
-#'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-21",
+#'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
 #'            daily="max")
 #'
 #' #example 2: Get values from a random site and random variable
