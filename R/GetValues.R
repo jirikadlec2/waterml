@@ -17,22 +17,21 @@
 #' @export
 #' @examples
 #' #example 1: Get Values from a known site and variable from RushValley server
-#' GetValues("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx",
+#' GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx",
 #'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
 #'            daily="max")
 #'
-#' #example 2: Get values from a random site and random variable
+#' #example 2: Get values from a random  variable at a site
 #' server <- "http://hydrodata.info/chmi-h/cuahsi_1_1.asmx?wsdl"
-#' sites <- GetSites(server)
-#' randomSite <- sites[sample(nrow(sites),1),]
-#' variables <- GetVariables(server)
-#' randomVariable <- variables[sample(nrow(variables),1),]
-#' values <- GetValues(server, randomSite$FullSiteCode,
-#'           randomVariable$FullVariableCode, Sys.Date()-365, Sys.Date())
+#' siteCode <- "CHMI-H:764"
+#' siteInfo <- GetSiteInfo(server, siteCode)
+#' series <- siteInfo[sample(nrow(siteInfo),1),]
+#' values <- GetValues(server, series$FullSiteCode,
+#'           series$FullVariableCode, Sys.Date()-10, Sys.Date())
 #' if(!is.null(values)) {
-#'  plot(values, type="l", main=randomSite$SiteName,
-#'  ylab=paste(randomVariable$VariableName,
-#'  randomVariable$UnitAbbreviation))
+#'  plot(values, type="l", main=series$SiteName,
+#'  ylab=paste(series$VariableName,
+#'  series$UnitAbbreviation))
 #' }
 #'
 

@@ -4,11 +4,11 @@
 #'
 #' @import XML
 #' @param server The URL of the web service ending with .asmx,
-#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
+#'  for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx
 #' @keywords waterml
 #' @export
 #' @examples
-#' GetVariables("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx")
+#' GetVariables("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx")
 
 GetVariables <- function(server) {
   #remove everything after .asmx
