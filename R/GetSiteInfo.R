@@ -43,6 +43,7 @@ GetSiteInfo <- function(server, siteCode) {
   N <- xmlSize(sc)
   #define the columns for the output data frame
   df <- data.frame(SiteName=rep("",N),
+                   SiteID=rep(NA,N),
                    SiteCode=rep("",N),
                    FullSiteCode=rep("",N),
                    Latitude=rep(NA,N),
@@ -88,7 +89,9 @@ GetSiteInfo <- function(server, siteCode) {
   s <- xmlToList(siteInfo)
   siteName <- s$siteName
   siteCode <- s$siteCode$text
-  fullSiteCode <- paste(s$siteCode$.attrs["network"], siteCode, sep=":")
+  network <- s$siteCode$.attrs["network"]
+  siteID <- ifelse(is.null(s$siteCode$.attrs["siteID"]), NA, s$siteCode$.attrs["siteID"])
+  fullSiteCode <- paste(network, siteCode, sep=":")
   latitude <- as.numeric(s$geoLocation$geogLocation$latitude)
   longitude <- as.numeric(s$geoLocation$geogLocation$longitude)
   elevation <- ifelse(is.null(s$elevation_m), NA, s$elevation_m)
@@ -108,6 +111,9 @@ GetSiteInfo <- function(server, siteCode) {
 
     attr <- xmlAttrs(element)["name"]
     if (attr == 'SiteComments') {
+      comments <- xmlValue(element)
+    }
+    if (attr == 'Site Comments') {
       comments <- xmlValue(element)
     }
     if (attr == 'State') {
@@ -139,27 +145,40 @@ GetSiteInfo <- function(server, siteCode) {
     df$UnitType[i] <- v$unit$unitType
     df$UnitAbbreviation[i] <- v$unit$unitAbbreviation
     df$NoDataValue[i] <- as.numeric(v$noDataValue)
-    df$IsRegular[i] <- v$timeScale$.attrs["isRegular"]
+    df$IsRegular[i] <- ifelse(is.null(v$timeScale$.attrs["isRegular"]), "false", v$timeScale$.attrs["isRegular"])
     df$TimeUnitName[i] <- v$timeScale$unit$unitName
     df$TimeUnitAbbreviation[i] <- v$timeScale$unit$unitAbbreviation
     df$TimeSupport[i] <- v$timeScale$timeSupport
     df$Speciation[i] <- v$speciation
-    #method-related fields
+    #method-related fields (use either code or id)
     m <- serieList$method
-    df$methodCode[i] <- m$methodCode
+    df$methodCode[i] <- ifelse(is.null(m$methodCode), NA, m$methodCode)
     df$methodDescription[i] <- m$methodDescription
     df$methodLink[i] <- ifelse(is.null(m$methodLink),NA,m$methodLink)
     df$methodID[i] <- ifelse(is.null(m$.attrs["methodID"]),NA,m$.attrs["methodID"])
+    if (is.na(df$methodID[i]) & !is.na(df$methodCode[i])) {
+      df$methodID[i] <- df$methodCode[i]
+    }
+    if (is.na(df$methodCode[i]) & !is.na(df$methodID[i])) {
+      df$methodCode[i] <- df$methodID[i]
+    }
     #source-related fields
     src <- serieList$source
     df$organization[i] <- src$organization
     df$sourceDescription[i] <- src$sourceDescription
     df$citation[i] <- ifelse(is.null(src$citation), NA, src$citation)
-    df$sourceID[i] <- ifelse(is.null(m$.attrs["sourceID"]),NA,m$.attrs["sourceID"])
-    #quality control-related fields
+    df$sourceID[i] <- ifelse(is.null(src$.attrs["sourceID"]),NA,src$.attrs["sourceID"])
+    #quality control-related fields (use either code or id)
     qc <- serieList$qualityControlLevel
-    df$qualityControlLevelID[i] <- qc$.attrs["qualityControlLevelID"]
-    df$qualityControlLevelCode[i] <- qc$qualityControlLevelCode
+    df$qualityControlLevelID[i] <- ifelse(is.null(qc$.attrs["qualityControlLevelID"]), NA, qc$.attrs["qualityControlLevelID"])
+    df$qualityControlLevelCode[i] <- ifelse(is.null(qc$qualityControlLevelCode), NA, qc$qualityControlLevelCode)
+    if (is.na(df$qualityControlLevelID[i]) & !is.na(df$qualityControlLevelCode[i])) {
+      df$qualityControlLevelID[i] <- df$qualityControlLevelCode[i]
+    }
+    if (is.na(df$qualityControlLevelCode[i]) & !is.na(df$qualityControlLevelID[i])) {
+      df$qualityControlLevelCode[i] <- df$qualityControlLevelID[i]
+    }
+
     df$qualityControlLevelDefinition[i] <- qc$definition
     #time interval-related fields
     df$valueCount[i] <- serieList$valueCount
@@ -168,6 +187,7 @@ GetSiteInfo <- function(server, siteCode) {
     df$endDateTime[i] <- as.POSIXct(timeInterval$endDateTime)
     #site related fields
     df$SiteName[i] <- siteName
+    df$SiteID[i] <- siteID
     df$SiteCode[i] <- siteCode
     df$FullSiteCode[i] <- fullSiteCode
     df$Latitude[i] <- latitude

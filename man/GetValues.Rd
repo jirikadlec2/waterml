@@ -4,7 +4,8 @@
 \alias{GetValues}
 \title{GetValues}
 \usage{
-GetValues(server, siteCode, variableCode, startDate, endDate, daily = NULL)
+GetValues(server, siteCode, variableCode, startDate = NULL, endDate = NULL,
+  daily = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .asmx,
@@ -16,11 +17,11 @@ and use the FullSiteCode field.}
 \item{variableCode}{The variable code. To get a list of possible variable codes, see GetVariables()
 function and use the FullVariableCode field}
 
-\item{startDate}{The start date in "yyyy-mm-dd" format}
+\item{startDate}{(optional) The start date in "yyyy-mm-dd" format}
 
-\item{endDate}{The end date in "yyyy-mm-dd" format}
+\item{endDate}{(optional) The end date in "yyyy-mm-dd" format}
 
-\item{daily}{Defaults to NULL. If you set daily="max", daily="min" or daily="mean", then the
+\item{daily}{(optional) If you set daily="max", daily="min" or daily="mean", then the
 data values are aggreagted to daily time step.}
 }
 \description{
@@ -31,19 +32,6 @@ This function gets the time series data values from the WaterML web service
 GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx",
            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
            daily="max")
-
-#example 2: Get values from a random  variable at a site
-server <- "http://hydrodata.info/chmi-h/cuahsi_1_1.asmx?wsdl"
-siteCode <- "CHMI-H:764"
-siteInfo <- GetSiteInfo(server, siteCode)
-series <- siteInfo[sample(nrow(siteInfo),1),]
-values <- GetValues(server, series$FullSiteCode,
-          series$FullVariableCode, Sys.Date()-10, Sys.Date())
-if(!is.null(values)) {
- plot(values, type="l", main=series$SiteName,
- ylab=paste(series$VariableName,
- series$UnitAbbreviation))
-}
 }
 \keyword{waterml}
 

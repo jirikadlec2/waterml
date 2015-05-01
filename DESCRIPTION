@@ -16,6 +16,6 @@ Description: The waterml package lets you connect to any CUAHSI WaterOneFlow
 Depends:
     R (>= 3.0.1)
 Imports:
-    XML
+    XML, RJSONIO, httr
 License: MIT + file LICENSE
 LazyData: true

@@ -4,11 +4,11 @@
 #'
 #' @import XML
 #' @param server The URL of the web service ending with .asmx,
-#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
+#'  for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx
 #' @keywords waterml
 #' @export
 #' @examples
-#' GetSites("http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx")
+#' GetSites("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx")
 
 GetSites <- function(server) {
   #remove everything after .asmx
@@ -31,9 +31,16 @@ GetSites <- function(server) {
 
   N <- xmlSize(doc) - 1 #because first element is queryInfo
 
-  df <- data.frame(SiteName=rep("",N), SiteCode=rep("",N), FullSiteCode=rep("",N),
-                   Latitude=rep(NA,N), Longitude=rep(NA,N), Elevation=rep(NA,N),
-                   State=rep("",N), County=rep("",N), Comments=rep("",N),
+  df <- data.frame(SiteName=rep("",N),
+                   SiteID=rep(NA, N),
+                   SiteCode=rep("",N),
+                   FullSiteCode=rep("",N),
+                   Latitude=rep(NA,N),
+                   Longitude=rep(NA,N),
+                   Elevation=rep(NA,N),
+                   State=rep("",N),
+                   County=rep("",N),
+                   Comments=rep("",N),
                    stringsAsFactors=FALSE)
 
   for(i in 1:N){
@@ -41,15 +48,14 @@ GetSites <- function(server) {
     siteInfo <- doc[[i+1]][[1]]
     siteList <- xmlToList(siteInfo)
     siteName <- siteList$siteName
-    siteCode <- siteList$siteCode$text
-    fullSiteCode <- paste(siteList$siteCode$.attrs["network"], siteCode, sep=":")
+    sCode <- siteList$siteCode
+    siteCode <- sCode$text
+    siteID <- ifelse(is.null(sCode$.attrs["siteID"]), siteCode, sCode$.attrs["siteID"])
+    network <- sCode$.attrs["network"]
+    fullSiteCode <- paste(network, siteCode, sep=":")
     latitude <- as.numeric(siteList$geoLocation$geogLocation$latitude)
     longitude <- as.numeric(siteList$geoLocation$geogLocation$longitude)
-
-    elevation <- NA
-    if (!is.null(siteList$elevation_m)) {
-      elevation <- as.numeric(siteList$elevation_m)
-    }
+    elevation <- ifelse(is.null(siteList$elevation_m), NA, siteList$elevation_m)
 
     comments <- NA
     state <- NA
@@ -69,6 +75,9 @@ GetSites <- function(server) {
       if (attr == 'SiteComments') {
         comments <- xmlValue(element)
       }
+      if (attr == 'Site Comments') {
+        comments <- xmlValue(element)
+      }
       if (attr == 'State') {
         state <- xmlValue(element)
       }
@@ -78,6 +87,7 @@ GetSites <- function(server) {
     }
     df$SiteName[i] <- siteName
     df$SiteCode[i] <- siteCode
+    df$SiteID[i] <- siteID
     df$FullSiteCode[i] <- fullSiteCode
     df$Latitude[i] <- latitude
     df$Longitude[i] <- longitude

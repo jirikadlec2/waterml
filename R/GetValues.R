@@ -9,9 +9,9 @@
 #'  and use the FullSiteCode field.
 #' @param variableCode The variable code. To get a list of possible variable codes, see GetVariables()
 #'  function and use the FullVariableCode field
-#' @param startDate The start date in "yyyy-mm-dd" format
-#' @param endDate The end date in "yyyy-mm-dd" format
-#' @param daily Defaults to NULL. If you set daily="max", daily="min" or daily="mean", then the
+#' @param startDate (optional) The start date in "yyyy-mm-dd" format
+#' @param endDate (optional) The end date in "yyyy-mm-dd" format
+#' @param daily (optional) If you set daily="max", daily="min" or daily="mean", then the
 #' data values are aggreagted to daily time step.
 #' @keywords waterml
 #' @export
@@ -21,30 +21,21 @@
 #'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
 #'            daily="max")
 #'
-#' #example 2: Get values from a random  variable at a site
-#' server <- "http://hydrodata.info/chmi-h/cuahsi_1_1.asmx?wsdl"
-#' siteCode <- "CHMI-H:764"
-#' siteInfo <- GetSiteInfo(server, siteCode)
-#' series <- siteInfo[sample(nrow(siteInfo),1),]
-#' values <- GetValues(server, series$FullSiteCode,
-#'           series$FullVariableCode, Sys.Date()-10, Sys.Date())
-#' if(!is.null(values)) {
-#'  plot(values, type="l", main=series$SiteName,
-#'  ylab=paste(series$VariableName,
-#'  series$UnitAbbreviation))
-#' }
-#'
 
-GetValues <- function(server, siteCode, variableCode, startDate, endDate, daily=NULL) {
+GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NULL, daily=NULL) {
   m <- regexpr(".asmx", server)
   base.url <- substr(server, 0, m+nchar(".asmx")-1)
   values.url <- paste(base.url, "/GetValuesObject", sep="")
 
+  #check startDate, endDate if it is null
+  startDateParam <- ifelse(is.null(startDate), "", strftime(as.POSIXct(startDate), "%Y-%m-%dT%H:%M:%S"))
+  endDateParam <- ifelse(is.null(endDate), "", strftime(as.POSIXct(endDate), "%Y-%m-%dT%H:%M:%S"))
+
   url = paste(values.url, "?location=", siteCode,
               "&variable=", variableCode,
-              "&startDate=",startDate, "&endDate=",endDate, "&authToken=",
+              "&startDate=",startDateParam, "&endDate=",endDateParam, "&authToken=",
               sep="")
-  print("fetching values from server...")
+  print(paste("fetching values from ", url))
 
   doc <- xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
 
@@ -63,6 +54,7 @@ GetValues <- function(server, siteCode, variableCode, startDate, endDate, daily=
   if (is.null(vals)){
     print(paste("no data values found:", url))
     return(NULL)
+
   }
   if (xmlValue(vals) == "") {
     print(paste("no data values found:", url))
@@ -75,7 +67,7 @@ GetValues <- function(server, siteCode, variableCode, startDate, endDate, daily=
   dt = c()
   for (j in 1:valCount){
     if(xmlName(vals[[j]]) == 'value') {
-      dt <- c(dt, xmlAttrs(vals[[j]])["dateTime"])
+      dt <- c(dt, as.character(xmlAttrs(vals[[j]])["dateTime"]))
       val <- c(val, as.numeric(xmlValue(vals[[j]])))
     }
   }
@@ -85,10 +77,11 @@ GetValues <- function(server, siteCode, variableCode, startDate, endDate, daily=
     return(NULL)
   }
 
-
-  df <- data.frame("time"=as.POSIXct(dt), "DataValue"=val)
+  #normal case: no aggregation
+  df <- data.frame("time"=as.POSIXct(strptime(dt, "%Y-%m-%dT%H:%M:%S")), "DataValue"=val)
   df[df$DataValue == noData,2] <- NA
 
+  #special case: daily data aggregation
   if (!is.null(daily)) {
     validdata <- na.omit(df)
     if (nrow(validdata) == 0) {
@@ -96,17 +89,10 @@ GetValues <- function(server, siteCode, variableCode, startDate, endDate, daily=
       return (NULL)
     }
     validdata$time <- as.Date(as.POSIXct(validdata$time))
-    if (daily=="max") {
-      dailyMax = aggregate(validdata$DataValue, list(validdata$time), max)
-      names(dailyMax)[1] <- "time"
-      names(dailyMax)[2] <- "DataValue"
-      return(dailyMax)
-    } else if (daily=="mean") {
-      dailyMean = aggregate(validdata$DataValue, list(validdata$time), mean)
-      names(dailyMean)[1] <- "time"
-      names(dailyMax)[2] <- "DataValue"
-      return(dailyMean)
-    }
+    dailyValues <- aggregate(validdata$DataValue, list(validdata$time), daily)
+    names(dailyValues)[1] <- "time"
+    names(dailyValues)[2] <- "DataValue"
+    return(dailyValues)
   }
 
   return(df)

@@ -41,7 +41,7 @@ GetVariables <- function(server) {
     df$UnitType[i] <- v$unit$unitType
     df$UnitAbbreviation[i] <- v$unit$unitAbbreviation
     df$NoDataValue <- as.numeric(v$noDataValue)
-    df$IsRegular <- v$timeScale$.attrs["isRegular"]
+    df$IsRegular <- ifelse(is.null(v$timeScale$.attrs["isRegular"]), "false", v$timeScale$.attrs["isRegular"])
     df$TimeUnitName <- v$timeScale$unit$unitName
     df$TimeUnitAbbreviation <- v$timeScale$unit$unitAbbreviation
     df$TimeSupport <- v$timeScale$timeSupport
