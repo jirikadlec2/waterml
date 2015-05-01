@@ -5,7 +5,7 @@
 #' @import XML
 #' @param server The URL of the web service ending with .asmx,
 #'  for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx
-#' @keywords waterml
+#' @keywords WaterML
 #' @export
 #' @examples
 #' GetVariables("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx")
@@ -19,13 +19,16 @@ GetVariables <- function(server) {
   vars <- doc[[2]]
   N <- xmlSize(vars)
   #define the columns
-  df <- data.frame(VariableCode=rep("",N), FullVariableCode=rep("",N),
-                   VariableName=rep("",N), ValueType=rep("",N),
-                   DataType=rep("",N), GeneralCategory=rep("",N),SampleMedium=rep("",N),
-                   UnitName=rep("",N), UnitType=rep("",N), UnitAbbreviation=rep("",N),
-                   NoDataValue=rep(NA,N), IsRegular=rep("",N),
-                   TimeUnitName=rep("",N), TimeUnitAbbreviation=rep("",N),
-                   TimeSupport=rep("",N), Speciation=rep("",N), stringsAsFactors=FALSE)
+  df <- data.frame(
+    VariableCode=rep("",N), FullVariableCode=rep("",N),
+    VariableName=rep("",N), ValueType=rep("",N),
+    DataType=rep("",N), GeneralCategory=rep("",N),SampleMedium=rep("",N),
+    UnitName=rep("",N), UnitType=rep("",N), UnitAbbreviation=rep("",N),
+    NoDataValue=rep(NA,N), IsRegular=rep("",N),
+    TimeUnitName=rep("",N), TimeUnitAbbreviation=rep("",N),
+    TimeSupport=rep("",N), Speciation=rep("",N),
+    stringsAsFactors=FALSE)
+
   for(i in 1:N) {
     varObj <- vars[[i]]
     v <- xmlToList(varObj)

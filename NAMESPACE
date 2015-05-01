@@ -3,6 +3,7 @@
 export(AddMethods)
 export(AddSites)
 export(AddSources)
+export(AddValues)
 export(AddVariables)
 export(GetServices)
 export(GetSiteInfo)

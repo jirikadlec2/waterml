@@ -16,5 +16,5 @@ This function gets the table of variables from the WaterML web service
 \examples{
 GetVariables("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx")
 }
-\keyword{waterml}
+\keyword{WaterML}
 
