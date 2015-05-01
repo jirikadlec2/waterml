@@ -1,6 +1,6 @@
 Package: waterml
 Title: Fetch and Analyze Data from WaterML or CUAHSI WaterOneFlow Web Service
-Version: 0.8
+Version: 0.9.1
 Authors@R: person("Jiri","Kadlec", email="jirikadlec2@gmail.com", role=c("aut", "cre"))
 Description: The waterml package lets you connect to any CUAHSI WaterOneFlow
     web service from any hydroserver. To see list of available hydroservers,
