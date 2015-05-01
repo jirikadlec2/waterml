@@ -4,15 +4,20 @@ Version: 0.9.1
 Authors@R: person("Jiri","Kadlec", email="jirikadlec2@gmail.com", role=c("aut", "cre"))
 Description: The waterml package lets you connect to any CUAHSI WaterOneFlow
     web service from any hydroserver. To see list of available hydroservers,
-    see http: //hiscentral.cuahsi.org. The package has four functions:
+    see http: //hiscentral.cuahsi.org. The package has five data download functions:
     GetServices(): show all public HydroServers from the HIS Central
     HydroCatalog. GetVariables(): Show a data.frame with all variables on the
     server. GetSites(): Show a data.frame with all sites on the server.
+    GetSiteInfo(): Show what variables, methods and quality control levels are
+    available at the specific site.
     GetValues(): Given a site code, variable code, start time and endtime,
     fetch a data.frame of all the data values. The data.frame has two columns:
     time and DataValue. This function has an optional "daily" parameter you can
     set daily="max", daily="min" or daily="mean" to get aggregated daily
-    values.
+    values. The package also has five data upload functions:
+    AddSites(), AddVariables(), AddMethods(), AddSources(), and AddValues().
+    These functions can be used for uploading data to a HydroServer Lite ODM database
+    via the data upload web service interface.
 Depends:
     R (>= 3.0.1)
 Imports:
