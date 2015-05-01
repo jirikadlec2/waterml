@@ -24,8 +24,8 @@ NOTE that the values of these fields must be in the CUAHSI controlled vocabulary
 \value{
 A table of the added variables, with two extra columns:
 VariableID (the ID assigned by the server),
-Status (the status showing if the site was added: OK or Error). If the status is Error, then
-the Error message with reason why the site could not be added is also shown.
+Status (the status showing if the variable was added: OK or Error). If the status is Error, then
+the Error message with reason why the variable could not be added is also shown.
 }
 \description{
 This function adds a table of variables to HydroServer Lite.
