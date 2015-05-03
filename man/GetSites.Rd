@@ -7,14 +7,15 @@
 GetSites(server)
 }
 \arguments{
-\item{server}{The URL of the web service ending with .asmx,
-for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx}
+\item{server}{The URL of the web service ending with .WSDL,
+for example: http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL
+alternatively this can be the REST URL to get the sites.}
 }
 \description{
 This function gets the table of sites from the WaterML web service
 }
 \examples{
-GetSites("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx")
+GetSites("http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL")
 }
 \keyword{waterml}
 

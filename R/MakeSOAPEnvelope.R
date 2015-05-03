@@ -50,7 +50,7 @@ MakeSOAPEnvelope <- function(CUAHSINamespace, MethodName, parameters=NULL) {
   soapAction <- paste(CUAHSINamespace, MethodName, sep="")
   #make the XML for parameters
   if (MethodName == "GetSitesObject" | MethodName == "GetSites") {
-    XMLParameters <- c('<site><string /></site>')
+    XMLParameters <- c('<site></site>')
   } else {
     XMLParameters <- paste('<',names(parameters), '>', parameters, '</', names(parameters),'>\n',sep="")
   }

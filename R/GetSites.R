@@ -3,31 +3,67 @@
 #' This function gets the table of sites from the WaterML web service
 #'
 #' @import XML
-#' @param server The URL of the web service ending with .asmx,
-#'  for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx
+#' @param server The URL of the web service ending with .WSDL,
+#'  for example: http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL
+#'  alternatively this can be the REST URL to get the sites.
 #' @keywords waterml
 #' @export
 #' @examples
-#' GetSites("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx")
+#' GetSites("http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL")
 
 GetSites <- function(server) {
-  #remove everything after .asmx
-  m <- regexpr(".asmx", server)
-  base.url <- substr(server, 0, m+nchar(".asmx")-1)
-  sites.url <- paste(base.url, "/GetSitesObject?site=&authToken=", sep="")
 
-  print("fetching sites from server...")
-  downloaded = FALSE
-  download <- tryCatch({
-    doc <- xmlRoot(xmlTreeParse(sites.url, getDTD=FALSE, useInternalNodes = TRUE))
-    downloaded = TRUE
-  }, error = function(err) {
-    print(paste("error fetching sites:", err))
-    doc <- NULL
-  })
-  if (!downloaded){
-    return(NULL)
+  # if server ends with ?WSDL or ?wsdl, we assume that service is SOAP
+  # otherwise, assume that service is REST
+  SOAP <- TRUE
+  m <- regexpr("?WSDL|wsdl", server)
+  if (m > 1) {
+    url <- substr(server, 0, m - 2)
+    SOAP <- TRUE
+  } else {
+    url <- paste(server, "?site=&authToken=", sep="")
+    SOAP <- FALSE
   }
+
+  #if the service is SOAP:
+  if (SOAP) {
+    versionInfo <- WaterOneFlowVersion(server)
+    namespace <- versionInfo$Namespace
+    version <- versionInfo$Version
+    if (version == "1.0") {
+      methodName <- "GetSites"
+    } else {
+      methodName <- "GetSitesObject"
+    }
+    SOAPAction <- paste(namespace, methodName, sep="")
+    envelope <- MakeSOAPEnvelope(namespace, methodName)
+    response <- POST(url, body = envelope,
+                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
+                     verbose())
+    status.code <- http_status(response)$category
+    WaterML <- content(response, as="text")
+    SOAPdoc <- tryCatch({
+      xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))
+    }, error = function(err) {
+      print(paste("error fetching sites from URL:", url))
+      return(NULL)
+    })
+    #get the sitesResponse content element
+    doc <- SOAPdoc[[2]][[1]][[1]]
+    if (is.null(doc)) {
+      doc <- SOAPdoc[[1]][[1]][[1]]
+    }
+    doc
+  } else {
+    #if the service is REST
+    doc <- tryCatch({
+      xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
+    }, error = function(err) {
+      print(paste("error fetching sites from URL:", url))
+      return(NULL)
+    })
+  }
+
 
   N <- xmlSize(doc) - 1 #because first element is queryInfo
 
