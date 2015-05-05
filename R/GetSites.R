@@ -49,10 +49,12 @@ GetSites <- function(server) {
       return(NULL)
     })
     #get the sitesResponse content element
-    doc <- SOAPdoc[[2]][[1]][[1]]
-    if (is.null(doc)) {
-      doc <- SOAPdoc[[1]][[1]][[1]]
+    #check soap:Header
+    body <- 1
+    if (xmlName(SOAPdoc[[1]]) == "Header") {
+      body <- 2
     }
+    doc <- SOAPdoc[[body]][[1]][[1]]
     doc
   } else {
     #if the service is REST

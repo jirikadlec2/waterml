@@ -5,37 +5,63 @@
 #' @import XML
 #' @param server The URL of the web service ending with .asmx or .wsdl,
 #'  for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL
-#' @param siteCode The site code, for example: Ru5BMMA. To get a list of available site codes,
-#'  see GetSites() function and use the FullSiteCode field.
+#' @param siteCode The full site code, for example: default:Ru5BMMA. To get a list of
+#' available site codes, see GetSites() function and use the FullSiteCode field.
 #' @keywords waterml
 #' @export
 #' @examples
 #' GetSiteInfo("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
-#'              siteCode="Ru5BMMA")
+#'              siteCode="default:Ru5BMMA")
 
 GetSiteInfo <- function(server, siteCode) {
-  #remove everything after .asmx
-  m <- regexpr(".asmx", server)
-  base.url <- substr(server, 0, m+nchar(".asmx")-1)
-  siteinfo.url <- paste(base.url, "/GetSiteInfoObject", sep="")
-  #make sure it's the full site code - special case
-  if (grepl("worldwater.byu.edu", base.url)) {
-    siteCode <- ifelse(grepl(":", siteCode), siteCode, paste("default",siteCode, sep=":"))
-  }
-  url = paste(siteinfo.url, "?site=", siteCode,
-              "&authToken=", sep="")
 
-  print(paste("fetching site info from server for:", siteCode))
-  downloaded = FALSE
-  download <- tryCatch({
-    doc <- xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
-    downloaded = TRUE
-  }, error = function(err) {
-    print(paste("error fetching siteInfo:", err))
-    doc <- NULL
-  })
-  if (!downloaded){
-    return(NULL)
+  # if server ends with ?WSDL or ?wsdl, we assume that service is SOAP
+  # otherwise, assume that service is REST
+  SOAP <- TRUE
+  m <- regexpr("?WSDL|wsdl", server)
+  if (m > 1) {
+    url <- substr(server, 0, m - 2)
+    SOAP <- TRUE
+  } else {
+    SOAP <- FALSE
+  }
+
+  #if the service is SOAP:
+  if (SOAP) {
+    versionInfo <- WaterOneFlowVersion(server)
+    namespace <- versionInfo$Namespace
+    version <- versionInfo$Version
+    methodName <- "GetSiteInfoObject"
+
+    SOAPAction <- paste(namespace, methodName, sep="")
+    envelope <- MakeSOAPEnvelope(namespace, methodName, c(site=siteCode))
+    response <- POST(url, body = envelope,
+                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
+                     verbose())
+    status.code <- http_status(response)$category
+    WaterML <- content(response, as="text")
+    SOAPdoc <- tryCatch({
+      xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))
+    }, error = function(err) {
+      print(paste("error fetching siteInfo from URL:", url, err))
+      return(NULL)
+    })
+    #check soap:Header
+    body <- 1
+    if (xmlName(SOAPdoc[[1]]) == "Header") {
+      body <- 2
+    }
+    #get the variablesResponse content element
+    doc <- SOAPdoc[[body]][[1]][[1]]
+    doc
+  } else {
+    #if the service is REST
+    doc <- tryCatch({
+      xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
+    }, error = function(err) {
+      print(paste("error fetching siteInfo from URL:", url))
+      return(NULL)
+    })
   }
 
   #the seriesCatalog element
@@ -132,30 +158,49 @@ GetSiteInfo <- function(server, siteCode) {
     series <- sc[[i]]
     serieList <- xmlToList(series)
     #variable-related fields
-    v <- serieList$variable
-    varcode <- v$variableCode$text
+    v <- unlist(serieList$variable)
+
+    varcode <- v["variableCode.text"]
     df$VariableCode[i] <- varcode
-    df$FullVariableCode[i] <- paste(v$variableCode$.attrs["vocabulary"], varcode, sep=":")
-    df$VariableName[i] <- v$variableName
-    df$ValueType[i] <- v$valueType
-    df$DataType[i] <- v$dataType
-    df$GeneralCategory[i] <- v$generalCategory
-    df$SampleMedium[i] <- v$sampleMedium
-    df$UnitName[i] <- v$unit$unitName
-    df$UnitType[i] <- v$unit$unitType
-    df$UnitAbbreviation[i] <- v$unit$unitAbbreviation
-    df$NoDataValue[i] <- as.numeric(v$noDataValue)
-    df$IsRegular[i] <- ifelse(is.null(v$timeScale$.attrs["isRegular"]), "false", v$timeScale$.attrs["isRegular"])
-    df$TimeUnitName[i] <- v$timeScale$unit$unitName
-    df$TimeUnitAbbreviation[i] <- v$timeScale$unit$unitAbbreviation
-    df$TimeSupport[i] <- v$timeScale$timeSupport
-    df$Speciation[i] <- v$speciation
+    df$FullVariableCode[i] <- paste(v["variableCode..attrs.vocabulary"], varcode, sep=":")
+    df$VariableName[i] <- v["variableName"]
+    df$ValueType[i] <- v["valueType"]
+    df$DataType[i] <- v["dataType"]
+    df$GeneralCategory[i] <- v["generalCategory"]
+    df$SampleMedium[i] <- v["sampleMedium"]
+    if (version == "1.1") {
+      df$UnitName[i] <- v["unit.unitName"]
+      df$UnitType[i] <- v["unit.unitType"]
+      df$UnitAbbreviation[i] <- v["unit.unitAbbreviation"]
+      df$IsRegular[i] <- ifelse(is.na(v["timeScale..attrs.isRegular"]), v["timeScale.isRegular"],
+                                v["timeScale..attrs.isRegular"])
+      df$TimeUnitName[i] <- v["timeScale.unit.unitName"]
+      df$TimeUnitAbbreviation[i] <- v["timeScale.unit.unitAbbreviation"]
+      df$TimeSupport[i] <- v["timeScale.timeSupport"]
+      df$NoDataValue[i] <- as.numeric(v["noDataValue"])
+    } else {
+      df$UnitName[i] <- v["units.text"]
+      df$UnitType[i] <- v["units..attrs.unitsType"]
+      df$UnitAbbreviation[i] <- v["units..attrs.unitsAbbreviation"]
+      df$IsRegular[i] <- ifelse(is.na(v["timeSupport..attrs.isRegular"]), v["timeSupport.isRegular"],
+                                v["timeSupport..attrs.isRegular"])
+      df$TimeUnitName[i] <- v["timeSupport.unit.UnitDescription"]
+      df$TimeUnitAbbreviation[i] <- v["timeSupport.unit.UnitAbbreviation"]
+      df$TimeSupport[i] <- v["timeSupport.timeInterval"]
+      df$NoDataValue[i] <- as.numeric(v["NoDataValue"])
+    }
+    df$Speciation[i] <- v["speciation"]
+
     #method-related fields (use either code or id)
-    m <- serieList$method
-    df$methodCode[i] <- ifelse(is.null(m$methodCode), NA, m$methodCode)
-    df$methodDescription[i] <- m$methodDescription
-    df$methodLink[i] <- ifelse(is.null(m$methodLink),NA,m$methodLink)
-    df$methodID[i] <- ifelse(is.null(m$.attrs["methodID"]),NA,m$.attrs["methodID"])
+    if (version == "1.0") {
+      meth <- serieList$Method
+    } else {
+      meth <- serieList$method
+    }
+    df$methodCode[i] <- ifelse(is.null(meth$methodCode), NA, meth$methodCode)
+    df$methodDescription[i] <- ifelse(is.null(meth$methodDescription), NA, meth$methodDescription)
+    df$methodLink[i] <- ifelse(is.null(meth$methodLink),NA,meth$methodLink)
+    df$methodID[i] <- ifelse(is.null(meth$.attrs["methodID"]),NA,meth$.attrs["methodID"])
     if (is.na(df$methodID[i]) & !is.na(df$methodCode[i])) {
       df$methodID[i] <- df$methodCode[i]
     }
@@ -163,15 +208,29 @@ GetSiteInfo <- function(server, siteCode) {
       df$methodCode[i] <- df$methodID[i]
     }
     #source-related fields
-    src <- serieList$source
-    df$organization[i] <- src$organization
-    df$sourceDescription[i] <- src$sourceDescription
+    if (version == "1.0") {
+      src <- serieList$Source
+      df$organization[i] <- src$Organization
+      df$sourceDescription[i] <- src$SourceDescription
+    } else {
+      src <- serieList$source
+      df$organization[i] <- src$organization
+      df$sourceDescription[i] <- src$sourceDescription
+    }
+
     df$citation[i] <- ifelse(is.null(src$citation), NA, src$citation)
     df$sourceID[i] <- ifelse(is.null(src$.attrs["sourceID"]),NA,src$.attrs["sourceID"])
     #quality control-related fields (use either code or id)
-    qc <- serieList$qualityControlLevel
-    df$qualityControlLevelID[i] <- ifelse(is.null(qc$.attrs["qualityControlLevelID"]), NA, qc$.attrs["qualityControlLevelID"])
-    df$qualityControlLevelCode[i] <- ifelse(is.null(qc$qualityControlLevelCode), NA, qc$qualityControlLevelCode)
+    if (version == "1.0") {
+      qc <- serieList$QualityControlLevel
+      df$qualityControlLevelID[i] <- ifelse(is.null(qc["QualityControlLevelID"]), NA, qc["QualityControlLevelID"])
+    } else {
+      qc <- serieList$qualityControlLevel
+      df$qualityControlLevelID[i] <- ifelse(is.null(qc[".attrs"]["qualityControlLevelID"]), NA, qc[".attrs"]["qualityControlLevelID"])
+    }
+
+
+    df$qualityControlLevelCode[i] <- ifelse(is.null(qc["qualityControlLevelCode"]), NA, qc["qualityControlLevelCode"])
     if (is.na(df$qualityControlLevelID[i]) & !is.na(df$qualityControlLevelCode[i])) {
       df$qualityControlLevelID[i] <- df$qualityControlLevelCode[i]
     }
@@ -179,7 +238,7 @@ GetSiteInfo <- function(server, siteCode) {
       df$qualityControlLevelCode[i] <- df$qualityControlLevelID[i]
     }
 
-    df$qualityControlLevelDefinition[i] <- qc$definition
+    df$qualityControlLevelDefinition[i] <- qc["definition"]
     #time interval-related fields
     df$valueCount[i] <- serieList$valueCount
     timeInterval <- serieList$variableTimeInterval

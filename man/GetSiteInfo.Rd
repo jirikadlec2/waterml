@@ -10,15 +10,15 @@ GetSiteInfo(server, siteCode)
 \item{server}{The URL of the web service ending with .asmx or .wsdl,
 for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL}
 
-\item{siteCode}{The site code, for example: Ru5BMMA. To get a list of available site codes,
-see GetSites() function and use the FullSiteCode field.}
+\item{siteCode}{The full site code, for example: default:Ru5BMMA. To get a list of
+available site codes, see GetSites() function and use the FullSiteCode field.}
 }
 \description{
 This function gets the table variables measured at a specific site from the WaterML web service
 }
 \examples{
 GetSiteInfo("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
-             siteCode="Ru5BMMA")
+             siteCode="default:Ru5BMMA")
 }
 \keyword{waterml}
 

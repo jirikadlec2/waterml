@@ -7,14 +7,14 @@
 GetVariables(server)
 }
 \arguments{
-\item{server}{The URL of the web service ending with .asmx,
-for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx}
+\item{server}{The URL of the web service ending with ?WSDL,
+for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL}
 }
 \description{
 This function gets the table of variables from the WaterML web service
 }
 \examples{
-GetVariables("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx")
+GetVariables("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL")
 }
 \keyword{WaterML}
 
