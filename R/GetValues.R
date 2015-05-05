@@ -4,7 +4,7 @@
 #'
 #' @import XML
 #' @param server The URL of the web service ending with .asmx,
-#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx
+#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL
 #' @param siteCode The site code. To get a list of available site codes, see GetSites() function
 #'  and use the FullSiteCode field.
 #' @param variableCode The variable code. To get a list of possible variable codes, see GetVariables()
@@ -17,7 +17,7 @@
 #' @export
 #' @examples
 #' #example 1: Get Values from a known site and variable from RushValley server
-#' GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx",
+#' GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
 #'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
 #'            daily="max")
 #'
@@ -31,13 +31,57 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   startDateParam <- ifelse(is.null(startDate), "", strftime(as.POSIXct(startDate), "%Y-%m-%dT%H:%M:%S"))
   endDateParam <- ifelse(is.null(endDate), "", strftime(as.POSIXct(endDate), "%Y-%m-%dT%H:%M:%S"))
 
-  url = paste(values.url, "?location=", siteCode,
-              "&variable=", variableCode,
-              "&startDate=",startDateParam, "&endDate=",endDateParam, "&authToken=",
-              sep="")
-  print(paste("fetching values from ", url))
+  # if server ends with ?WSDL or ?wsdl, we assume that service is SOAP
+  # otherwise, assume that service is REST
+  SOAP <- TRUE
+  m <- regexpr("?WSDL|wsdl", server)
+  if (m > 1) {
+    url <- substr(server, 0, m - 2)
+    SOAP <- TRUE
+  } else {
+    SOAP <- FALSE
+  }
 
-  doc <- xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
+  #if the service is SOAP:
+  if (SOAP) {
+    versionInfo <- WaterOneFlowVersion(server)
+    namespace <- versionInfo$Namespace
+    version <- versionInfo$Version
+    methodName <- "GetValuesObject"
+
+    SOAPAction <- paste(namespace, methodName, sep="")
+    envelope <- MakeSOAPEnvelope(namespace, methodName, c(location=siteCode,
+                                                          variable=variableCode,
+                                                          startDate=startDate,
+                                                          endDate=endDate))
+    response <- POST(url, body = envelope,
+                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
+                     verbose())
+    status.code <- http_status(response)$category
+    WaterML <- content(response, as="text")
+    SOAPdoc <- tryCatch({
+      xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))
+    }, error = function(err) {
+      print(paste("error fetching siteInfo from URL:", url, err))
+      return(NULL)
+    })
+    #check soap:Header
+    body <- 1
+    if (xmlName(SOAPdoc[[1]]) == "Header") {
+      body <- 2
+    }
+    #get the variablesResponse content element
+    doc <- SOAPdoc[[body]][[1]][[1]]
+    doc
+  } else {
+    #if the service is REST
+    doc <- tryCatch({
+      xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
+    }, error = function(err) {
+      print(paste("error fetching siteInfo from URL:", url))
+      return(NULL)
+    })
+  }
 
   variableElement <- doc[[2]][["variable"]]
   if (is.null(variableElement)) {

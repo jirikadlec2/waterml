@@ -9,7 +9,7 @@ GetValues(server, siteCode, variableCode, startDate = NULL, endDate = NULL,
 }
 \arguments{
 \item{server}{The URL of the web service ending with .asmx,
-for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx}
+for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL}
 
 \item{siteCode}{The site code. To get a list of available site codes, see GetSites() function
 and use the FullSiteCode field.}
@@ -29,7 +29,7 @@ This function gets the time series data values from the WaterML web service
 }
 \examples{
 #example 1: Get Values from a known site and variable from RushValley server
-GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx",
+GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
            daily="max")
 }
