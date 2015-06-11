@@ -33,9 +33,9 @@ GetVariables <- function(server) {
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName, c(variable=""))
     response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
-                     verbose())
+                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
     status.code <- http_status(response)$category
+    print(paste("GetVariables from", url, "...", status.code))
     WaterML <- content(response, as="text")
     SOAPdoc <- tryCatch({
       xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))

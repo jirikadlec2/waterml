@@ -55,9 +55,9 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
                                                           startDate=startDate,
                                                           endDate=endDate))
     response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
-                     verbose())
+                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
     status.code <- http_status(response)$category
+    print(paste("GetValues from", url, "...", status.code))
     WaterML <- content(response, as="text")
     SOAPdoc <- tryCatch({
       xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))

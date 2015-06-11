@@ -111,7 +111,7 @@ AddMethods <- function(server, username, password, methods) {
         print(content(response))
       }
       new.method <-
-        c(new.id,
+        c(NA,
           as.character(x$MethodDescription[i]),
           as.character(x$MethodLink[i]),
           as.character(status.code)

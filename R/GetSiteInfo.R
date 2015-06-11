@@ -36,9 +36,9 @@ GetSiteInfo <- function(server, siteCode) {
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName, c(site=siteCode))
     response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
-                     verbose())
+                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
     status.code <- http_status(response)$category
+    print(paste("GetSiteInfo from", url, "...", status.code))
     WaterML <- content(response, as="text")
     SOAPdoc <- tryCatch({
       xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))

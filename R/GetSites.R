@@ -38,9 +38,9 @@ GetSites <- function(server) {
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName)
     response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
-                     verbose())
+                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
     status.code <- http_status(response)$category
+    print(paste("GetSites from", url, "...", status.code))
     WaterML <- content(response, as="text")
     SOAPdoc <- tryCatch({
       xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))
@@ -55,7 +55,6 @@ GetSites <- function(server) {
       body <- 2
     }
     doc <- SOAPdoc[[body]][[1]][[1]]
-    doc
   } else {
     #if the service is REST
     doc <- tryCatch({
