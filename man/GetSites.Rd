@@ -15,7 +15,7 @@ alternatively this can be the REST URL to get the sites.}
 This function gets the table of sites from the WaterML web service
 }
 \examples{
-GetSites("http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL")
+sites <- GetSites("http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL")
 }
 \keyword{waterml}
 

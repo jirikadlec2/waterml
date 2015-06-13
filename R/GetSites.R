@@ -9,7 +9,7 @@
 #' @keywords waterml
 #' @export
 #' @examples
-#' GetSites("http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL")
+#' sites <- GetSites("http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL")
 
 GetSites <- function(server) {
 
@@ -37,101 +37,76 @@ GetSites <- function(server) {
     }
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName)
+
+    print(paste("downloading sites from:", url, "..."))
+    start.time <-  Sys.time()
+
     response <- POST(url, body = envelope,
                      add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
     status.code <- http_status(response)$category
-    print(paste("GetSites from", url, "...", status.code))
-    WaterML <- content(response, as="text")
-    SOAPdoc <- tryCatch({
-      xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))
-    }, error = function(err) {
-      print(paste("error fetching sites from URL:", url))
-      return(NULL)
-    })
-    #get the sitesResponse content element
-    #check soap:Header
-    body <- 1
-    if (xmlName(SOAPdoc[[1]]) == "Header") {
-      body <- 2
+
+    end.time <- Sys.time()
+
+    print(paste("download time:", format(end.time - start.time), "status:", status.code))
+
+    doc <- content(response)
+
+    # specify the namespace information
+    ns <- WaterOneFlowNamespace(version)
+
+    # extract the data columns with XPath
+    SiteName = xpathSApply(doc, "//sr:siteName", xmlValue, namespaces=ns)
+    SiteCode = xpathSApply(doc, "//sr:siteCode", xmlValue, namespaces=ns)
+    Network = xpathSApply(doc, "//sr:siteCode", xmlGetAttr, name="network", namespaces=ns)
+    Latitude = xpathSApply(doc, "//sr:latitude", xmlValue, namespaces=ns)
+    Longitude = xpathSApply(doc, "//sr:longitude", xmlValue, namespaces=ns)
+
+    SiteID <- xpathSApply(doc, "//sr:siteCode", xmlGetAttr, name="siteID", namespaces=ns)
+    SiteID <- ifelse(length(SiteID == 0), SiteCode, SiteID)
+
+    Elevation <- xpathSApply(doc, "//sr:elevation_m", xmlValue, namespaces=ns)
+    if (length(Elevation) == 0) {
+      Elevation <- NA
     }
-    doc <- SOAPdoc[[body]][[1]][[1]]
+
+    # State, County, Comments: different tags for WaterML 1.0 and 1.1
+    if (version=="1.1"){
+      State = xpathSApply(doc, "//sr:siteProperty[@name='State']", xmlValue, namespaces=ns)
+      County = xpathSApply(doc, "//sr:siteProperty[@name='County']", xmlValue, namespaces=ns)
+      Comments = xpathSApply(doc, "//sr:siteProperty[@name='Site Comments']", xmlValue, namespaces=ns)
+    } else {
+      State = xpathSApply(doc, "//sr:note[@title='State']", xmlValue, namespaces=ns)
+      County = xpathSApply(doc, "//sr:note[@title='County']", xmlValue, namespaces=ns)
+      Comments = NA
+    }
+    # Check for empty values of state, county, comments
+    if (length(State) == 0) {
+      State <- NA
+    }
+    if (length(County) == 0) {
+      County <- NA
+    }
+    if (length(Comments) == 0) {
+      Comments <- NA
+    }
+
+    df <- data.frame(
+      SiteID = ifelse(length(SiteID == 0), SiteCode, SiteID),
+      SiteName = SiteName,
+      SiteCode = SiteCode,
+      FullSiteCode = paste(Network, SiteCode, sep=":", collapse=""),
+      Latitude = as.numeric(Latitude),
+      Longitude = as.numeric(Longitude),
+      Elevation = as.numeric(Elevation),
+      State = State,
+      County = County,
+      Comments = Comments,
+      stringsAsFactors = FALSE)
+
+    return(df)
+
   } else {
     #if the service is REST
-    doc <- tryCatch({
-      xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
-    }, error = function(err) {
-      print(paste("error fetching sites from URL:", url))
-      return(NULL)
-    })
+    return(NULL)
   }
-
-
-  N <- xmlSize(doc) - 1 #because first element is queryInfo
-
-  df <- data.frame(SiteName=rep("",N),
-                   SiteID=rep(NA, N),
-                   SiteCode=rep("",N),
-                   FullSiteCode=rep("",N),
-                   Latitude=rep(NA,N),
-                   Longitude=rep(NA,N),
-                   Elevation=rep(NA,N),
-                   State=rep("",N),
-                   County=rep("",N),
-                   Comments=rep("",N),
-                   stringsAsFactors=FALSE)
-
-  for(i in 1:N){
-
-    siteInfo <- doc[[i+1]][[1]]
-    siteList <- xmlToList(siteInfo)
-    siteName <- siteList$siteName
-    sCode <- siteList$siteCode
-    siteCode <- sCode$text
-    siteID <- ifelse(is.null(sCode$.attrs["siteID"]), siteCode, sCode$.attrs["siteID"])
-    network <- sCode$.attrs["network"]
-    fullSiteCode <- paste(network, siteCode, sep=":")
-    latitude <- as.numeric(siteList$geoLocation$geogLocation$latitude)
-    longitude <- as.numeric(siteList$geoLocation$geogLocation$longitude)
-    elevation <- ifelse(is.null(siteList$elevation_m), NA, siteList$elevation_m)
-
-    comments <- NA
-    state <- NA
-    county <- NA
-
-    numElements <- xmlSize(siteInfo)
-    for (j in 1: numElements){
-      element <- siteInfo[[j]]
-
-      if (is.null(element)) {
-        print ('element is null!')
-        next
-      }
-      if (xmlName(element) != 'siteProperty') next
-
-      attr <- xmlAttrs(element)["name"]
-      if (attr == 'SiteComments') {
-        comments <- xmlValue(element)
-      }
-      if (attr == 'Site Comments') {
-        comments <- xmlValue(element)
-      }
-      if (attr == 'State') {
-        state <- xmlValue(element)
-      }
-      if (attr == 'County') {
-        county <- xmlValue(element)
-      }
-    }
-    df$SiteName[i] <- siteName
-    df$SiteCode[i] <- siteCode
-    df$SiteID[i] <- siteID
-    df$FullSiteCode[i] <- fullSiteCode
-    df$Latitude[i] <- latitude
-    df$Longitude[i] <- longitude
-    df$Elevation[i] <- elevation
-    df$Comments[i] <- comments
-    df$State[i] <- state
-    df$County[i] <- county
-  }
-  return(df)
 }
