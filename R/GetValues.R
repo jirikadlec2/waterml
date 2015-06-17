@@ -58,71 +58,66 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
                      add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
     status.code <- http_status(response)$category
     print(paste("GetValues from", url, "...", status.code))
-    WaterML <- content(response, as="text")
-    SOAPdoc <- tryCatch({
-      xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))
-    }, error = function(err) {
-      print(paste("error fetching siteInfo from URL:", url, err))
-      return(NULL)
-    })
-    #check soap:Header
-    body <- 1
-    if (xmlName(SOAPdoc[[1]]) == "Header") {
-      body <- 2
-    }
-    #get the variablesResponse content element
-    doc <- SOAPdoc[[body]][[1]][[1]]
-    doc
+
   } else {
-    #if the service is REST
-    doc <- tryCatch({
-      xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
-    }, error = function(err) {
-      print(paste("error fetching siteInfo from URL:", url))
-      return(NULL)
-    })
+    #REST
+    response <- GET(server)
+    status.code <- http_status(response)$category
+    print(paste("GetValues from", url, "...", status.code))
   }
 
-  variableElement <- doc[[2]][["variable"]]
-  if (is.null(variableElement)) {
-    print(paste("no data values found:", url))
+  ######################################################
+  # Parsing the WaterML XML Data                       #
+  ######################################################
+
+  print("reading data values WaterML ...")
+  doc <- tryCatch({
+    content(response)
+  }, warning = function(w) {
+    print("Error reading WaterML: Bad XML format.")
+    return(NULL)
+  }, error = function(e) {
+    print("Error reading WaterML: Bad XML format.")
     return(NULL)
   }
-  variable <- xmlToList(doc[[2]][["variable"]])
-  noData <- as.numeric(variable$noDataValue)
-
-
-  vals <- doc[[2]][["values"]]
-
-  hasValues <- FALSE
-  if (is.null(vals)){
-    print(paste("no data values found:", url))
-    return(NULL)
-
-  }
-  if (xmlValue(vals) == "") {
-    print(paste("no data values found:", url))
+  )
+  if (is.null(doc)) {
     return(NULL)
   }
 
-  valCount = xmlSize(vals)
-  xmNames = xmlSApply(vals, xmlName)
-  val = c()
-  dt = c()
-  for (j in 1:valCount){
-    if(xmlName(vals[[j]]) == 'value') {
-      dt <- c(dt, as.character(xmlAttrs(vals[[j]])["dateTime"]))
-      val <- c(val, as.numeric(xmlValue(vals[[j]])))
-    }
-  }
+  # specify the namespace information
+  ns <- WaterOneFlowNamespace(version)
 
-  if (length(val) == 0) {
+  # extract the data columns with XPath
+  val = xpathSApply(doc, "//sr:value", xmlValue, namespaces=ns)
+  dateTime = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+  timeOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
+  censorCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="censorCode", namespaces=ns)
+  dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+  methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodCode", namespaces=ns)
+  sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceCode", namespaces=ns)
+  qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevelCode", namespaces=ns)
+
+  nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue"))
+  #make the data frame
+  df <- data.frame(
+    time=as.POSIXct(strptime(dateTime, "%Y-%m-%dT%H:%M:%S")),
+    DataValue=as.numeric(val),
+    UTCOffset=as.numeric(timeOffset),
+    CensorCode=censorCode,
+    DateTimeUTC=as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S")),
+    MethodCode=methodCode,
+    SourceCode=sourceCode,
+    QualityControlLevelCode=qcCode,
+    stringsAsFactors=FALSE
+  )
+
+  if (nrow(df) > 0) {
     print(paste("no data values found:", url))
     return(NULL)
   }
 
   #normal case: no aggregation
-  df <- data.frame("time"=as.POSIXct(strptime(dt, "%Y-%m-%dT%H:%M:%S")), "DataValue"=val)
   df[df$DataValue == noData,2] <- NA
 
   #special case: daily data aggregation

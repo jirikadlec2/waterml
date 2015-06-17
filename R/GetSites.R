@@ -14,6 +14,18 @@
 #'  bounding box in decimal degrees. Allowed values are between -180.0 and +180.0
 #' @param north Optional parameter: The north latitude of the geographic
 #'  bounding box in decimal degrees. Allowed values are between -90.0 and +90.0
+#' @return a data.frame of sites. The data.frame has the following columns:
+#' SiteID: The site ID in the original database
+#' SiteName: The name of the site
+#' SiteCode: A short unique code of the site
+#' FullSiteCode: The complete unique code of the site in the format NETWORK:CODE.
+#'               Use this value in the GetSiteInfo and GetValues functions
+#' Latitude:  The WGS84 latitude in decimal degrees
+#' Longitude: The WGS84 longitude in decimal degrees
+#' Elevation: The elevation of the site above sea level in meters
+#' State:     Only for sites in the USA: the state of the site
+#' County:    Only for sites in the USA: The county of the site
+#' Comments:  Additional comments about the sites (note: this field is often empty)
 #' @keywords waterml
 #' @export
 #' @examples
@@ -90,11 +102,17 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
 
     download.time <- system.time(
       tryCatch({
+        downloaded <- FALSE
         response <- GET(server)
+        downloaded <- TRUE
       },error=function(e){
         print(conditionMessage(e))
-        return(NULL)
-      }))
+      })
+    )
+
+    if (!downloaded) {
+      return(NULL)
+    }
 
     status.code <- http_status(response)$category
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
@@ -125,14 +143,17 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
   SiteName = xpathSApply(doc, "//sr:siteName", xmlValue, namespaces=ns)
   SiteCode = xpathSApply(doc, "//sr:siteCode", xmlValue, namespaces=ns)
   Network = xpathSApply(doc, "//sr:siteCode", xmlGetAttr, name="network", namespaces=ns)
-  Latitude = xpathSApply(doc, "//sr:latitude", xmlValue, namespaces=ns)
-  Longitude = xpathSApply(doc, "//sr:longitude", xmlValue, namespaces=ns)
 
   SiteID <- xpathSApply(doc, "//sr:siteCode", xmlGetAttr, name="siteID", namespaces=ns)
   SiteID <- unlist(SiteID)
 
-  numSiteIDs <- length(SiteID)
   numSites <- length(SiteCode)
+
+  Latitude <- xpathSApply(doc, "//sr:latitude", xmlValue, namespaces=ns)
+  Longitude = xpathSApply(doc, "//sr:longitude", xmlValue, namespaces=ns)
+
+  numSiteIDs <- length(SiteID)
+
   if (numSiteIDs != numSites) {
     SiteID <- SiteCode
   }
@@ -165,6 +186,22 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
   numComments <- length(Comments)
   if (numComments != numSites) {
     Comments <- NA
+  }
+
+  #special case: some site doesn't have latitude specified
+  numLatitudes <- length(Latitude)
+  if (numLatitudes < numSites) {
+    numValid <- numSites - numLatitudes + 1
+    SiteName <- SiteName[numValid:numSites]
+    SiteCode <- SiteCode[numValid:numSites]
+    SiteID <- SiteID[numValid:numSites]
+    Network <- Network[numValid:numSites]
+    Longitude <- Longitude[numValid:numSites]
+    Latitude <- Latitude[numValid:numSites]
+    Elevation <- Elevation[numValid:numSites]
+    State <- State[numValid:numSites]
+    County <- County[numValid:numSites]
+    Comments <- Comments[numValid:numSites]
   }
 
   df <- data.frame(
