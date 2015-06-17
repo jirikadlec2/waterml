@@ -98,10 +98,10 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceCode", namespaces=ns)
   qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevelCode", namespaces=ns)
 
-  nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue"))
+  #nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue"))
   #make the data frame
   df <- data.frame(
-    time=as.POSIXct(strptime(dateTime, "%Y-%m-%dT%H:%M:%S")),
+    DateTime=as.POSIXct(strptime(dateTime, "%Y-%m-%dT%H:%M:%S")),
     DataValue=as.numeric(val),
     UTCOffset=as.numeric(timeOffset),
     CensorCode=censorCode,
