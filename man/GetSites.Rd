@@ -4,18 +4,35 @@
 \alias{GetSites}
 \title{GetSites}
 \usage{
-GetSites(server)
+GetSites(server, west = NULL, south = NULL, east = NULL, north = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .WSDL,
 for example: http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL
 alternatively this can be the REST URL to get the sites.}
+
+\item{west}{Optional parameter: The west longitude of the geographic
+bounding box in decimal degrees. Allowed values are between -180.0 and +180.0}
+
+\item{south}{Optional parameter: The south latitude of the geographic
+bounding box in decimal degrees. Allowed values are between -90.0 and +90.0}
+
+\item{east}{Optional parameter: The east longitude of the geographic
+bounding box in decimal degrees. Allowed values are between -180.0 and +180.0}
+
+\item{north}{Optional parameter: The north latitude of the geographic
+bounding box in decimal degrees. Allowed values are between -90.0 and +90.0}
 }
 \description{
 This function gets the table of sites from the WaterML web service
 }
 \examples{
+#Getting all sites from a service
 sites <- GetSites("http://icewater.usu.edu/MudLake/cuahsi_1_0.asmx?WSDL")
+
+#Getting a subset of sites restricted by geographical area
+server <- "http://drought.usu.edu/usbrreservoirs/cuahsi_1_1.asmx?WSDL"
+sites_subset <- GetSites(server, west=-113.0, south=35.0, east=110.0, north=40.0)
 }
 \keyword{waterml}
 

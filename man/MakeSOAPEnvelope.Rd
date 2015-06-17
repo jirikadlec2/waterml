@@ -11,7 +11,8 @@ MakeSOAPEnvelope(CUAHSINamespace, MethodName, parameters = NULL)
 for WaterML 1.0, or "http://www.cuahsi.org/his/1.1/ws" for WaterML 1.1}
 
 \item{MethodName}{The name of the WaterOneFlow web service method. It can be one of the following
-values: "GetSites", "GetSitesObject", "GetSiteInfoObject", "GetVariablesObject", "GetValuesObject"}
+values: "GetSites", "GetSitesObject", "GetSitesByBoxObject", "GetSiteInfoObject",
+"GetVariablesObject", "GetValuesObject"}
 
 \item{parameters}{An optional vector of named parameters for the web method. For GetSites,
 GetSitesObject and GetVariables no parameters are required. For GetSiteInfoObject you need the

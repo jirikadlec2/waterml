@@ -8,7 +8,8 @@
 #' @param CUAHSINamespace The SOAP namespace. This must be either "http://www.cuahsi.org/his/1.0/ws"
 #' for WaterML 1.0, or "http://www.cuahsi.org/his/1.1/ws" for WaterML 1.1
 #' @param MethodName The name of the WaterOneFlow web service method. It can be one of the following
-#' values: "GetSites", "GetSitesObject", "GetSiteInfoObject", "GetVariablesObject", "GetValuesObject"
+#' values: "GetSites", "GetSitesObject", "GetSitesByBoxObject", "GetSiteInfoObject",
+#' "GetVariablesObject", "GetValuesObject"
 #' @param parameters An optional vector of named parameters for the web method. For GetSites,
 #' GetSitesObject and GetVariables no parameters are required. For GetSiteInfoObject you need the
 #' "site" parameter. For GetValuesObject you need the "location", "variable", "startDate" and "endDate"
@@ -41,7 +42,8 @@ MakeSOAPEnvelope <- function(CUAHSINamespace, MethodName, parameters=NULL) {
                validNamespace_1_0, "or", validNamespace_1_1))
   }
   #check MethodName
-  validMethodNames <- c("GetSites", "GetSitesObject", "GetSiteInfoObject", "GetVariableInfoObject", "GetValuesObject")
+  validMethodNames <- c("GetSites", "GetSitesObject", "GetSitesByBoxObject",
+                        "GetSiteInfoObject", "GetVariableInfoObject", "GetValuesObject")
   if (length(validMethodNames[validMethodNames == MethodName]) == 0) {
     message <- paste(validMethodNames, collapse=", ")
     stop(paste("The MethodName must be one of the following:", message))
