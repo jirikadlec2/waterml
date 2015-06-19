@@ -15,9 +15,22 @@
 
 GetSiteInfo <- function(server, siteCode) {
 
+  # trim any leading and trailing whitespaces in server
+  server <- gsub("^\\s+|\\s+$", "", server)
+
   # if server ends with ?WSDL or ?wsdl, we assume that service is SOAP
   # otherwise, assume that service is REST
   SOAP <- TRUE
+
+  # if server ends with .asmx, we also assume that the service is SOAP and we add ?WSDL
+  m1 <- regexpr("asmx$", server)
+  if (m1 > 1) {
+    server <- paste(server, "WSDL", sep="?")
+  }
+
+
+  # if server ends with ?WSDL or ?wsdl, we assume that service is SOAP
+  # otherwise, assume that service is REST
   m <- regexpr("?WSDL|wsdl", server)
   if (m > 1) {
     url <- substr(server, 0, m - 2)

@@ -143,26 +143,31 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
 
   # extract the data columns with XPath
   SiteName = xpathSApply(doc, "//sr:siteName", xmlValue, namespaces=ns)
+
+  N <- length(SiteName)
+  bigData <- 10000
+  if (N > bigData) {
+    print(paste("found", N,"sites"))
+    print("processing SiteCode...")
+  }
   SiteCode = xpathSApply(doc, "//sr:siteCode", xmlValue, namespaces=ns)
   Network = xpathSApply(doc, "//sr:siteCode", xmlGetAttr, name="network", namespaces=ns)
 
   SiteID <- xpathSApply(doc, "//sr:siteCode", xmlGetAttr, name="siteID", namespaces=ns)
   SiteID <- unlist(SiteID)
 
-  numSites <- length(SiteCode)
-
   Latitude <- xpathSApply(doc, "//sr:latitude", xmlValue, namespaces=ns)
   Longitude = xpathSApply(doc, "//sr:longitude", xmlValue, namespaces=ns)
 
   numSiteIDs <- length(SiteID)
 
-  if (numSiteIDs != numSites) {
+  if (numSiteIDs != N) {
     SiteID <- SiteCode
   }
 
   Elevation <- xpathSApply(doc, "//sr:elevation_m", xmlValue, namespaces=ns)
   numElevations <- length(Elevation)
-  if (numElevations != numSites) {
+  if (numElevations != N) {
     Elevation <- NA
   }
 
@@ -178,32 +183,32 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
   }
   # Check for empty values of state, county, comments
   numStates <- length(State)
-  if (numStates != numSites) {
+  if (numStates != N) {
     State <- NA
   }
   numCounties <- length(County)
-  if (numCounties != numSites) {
+  if (numCounties != N) {
     County <- NA
   }
   numComments <- length(Comments)
-  if (numComments != numSites) {
+  if (numComments != N) {
     Comments <- NA
   }
 
   #special case: some site doesn't have latitude specified
   numLatitudes <- length(Latitude)
-  if (numLatitudes < numSites) {
-    numValid <- numSites - numLatitudes + 1
-    SiteName <- SiteName[numValid:numSites]
-    SiteCode <- SiteCode[numValid:numSites]
-    SiteID <- SiteID[numValid:numSites]
-    Network <- Network[numValid:numSites]
-    Longitude <- Longitude[numValid:numSites]
-    Latitude <- Latitude[numValid:numSites]
-    Elevation <- Elevation[numValid:numSites]
-    State <- State[numValid:numSites]
-    County <- County[numValid:numSites]
-    Comments <- Comments[numValid:numSites]
+  if (numLatitudes < N) {
+    numValid <- N - numLatitudes + 1
+    SiteName <- SiteName[numValid:N]
+    SiteCode <- SiteCode[numValid:N]
+    SiteID <- SiteID[numValid:N]
+    Network <- Network[numValid:N]
+    Longitude <- Longitude[numValid:N]
+    Latitude <- Latitude[numValid:N]
+    Elevation <- Elevation[numValid:N]
+    State <- State[numValid:N]
+    County <- County[numValid:N]
+    Comments <- Comments[numValid:N]
   }
 
   df <- data.frame(

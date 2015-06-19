@@ -46,9 +46,11 @@ This function gets the time series data values from the WaterML web service
 }
 \examples{
 #example 1: Get Values from a known site and variable from RushValley server
-GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
+v <- GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
            daily="max")
+#example 2: Get values from an external REST URL (in this case the Provo USGS NWIS site id 10163000)
+v <- GetValues("http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060&startDT=2015-01-01")
 }
 \keyword{waterml}
 

@@ -3,6 +3,7 @@
 #' This function gets the time series data values from the WaterML web service
 #'
 #' @import XML
+#' @import httr
 #' @param server The URL of the web service ending with .asmx,
 #'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL
 #' @param siteCode The site code. To get a list of available site codes, see GetSites() function
@@ -32,10 +33,11 @@
 #' @export
 #' @examples
 #' #example 1: Get Values from a known site and variable from RushValley server
-#' GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
+#' v <- GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
 #'            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
 #'            daily="max")
-#'
+#' #example 2: Get values from an external REST URL (in this case the Provo USGS NWIS site id 10163000)
+#' v <- GetValues("http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060&startDT=2015-01-01")
 
 GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NULL, daily=NULL) {
   m <- regexpr(".asmx", server)
@@ -82,9 +84,10 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
   } else {
     #REST
-    response <- GET(server)
+    version <- "1.1"
+    download.time <- system.time(response <- GET(server))
     status.code <- http_status(response)$category
-    print(paste("GetValues from", url, "...", status.code))
+    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
   }
 
   ######################################################
@@ -122,6 +125,16 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
   if (N > bigData) { print("processing censorCode...") }
   censorCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="censorCode", namespaces=ns)
+  censorCode <- unlist(censorCode)
+  if (is.null(censorCode)) {
+    censorCode <- rep("nc", N)
+  }
+  if (N > bigData) { print("processing qualifiers...") }
+  qualifier <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualifiers", namespaces=ns)
+  qualifier <- unlist(qualifier)
+  if (is.null(qualifier)) {
+    qualifier <- rep("nc", N)
+  }
 
   if (version == "1.1") {
 
@@ -134,12 +147,18 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
     if (N > bigData) { print("processing methodCode...") }
     methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodCode", namespaces=ns)
+    methodCode <- unlist(methodCode)
+    if (is.null(methodCode)) { methodCode <- NA }
 
     if (N > bigData) { print("processing sourceCode...") }
     sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceCode", namespaces=ns)
+    sourceCode <- unlist(sourceCode)
+    if (is.null(sourceCode)) { sourceCode <- NA }
 
     if (N > bigData) { print("processing qualityControlLevelCode...") }
     qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevelCode", namespaces=ns)
+    qcCode <- unlist(sourceCode)
+    if (is.null(qcCode)) { qcCode <- NA }
 
     nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue", xmlValue, namespaces=ns))
 
@@ -167,6 +186,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     time=DateTime,
     DataValue=as.numeric(val),
     UTCOffset=UTCOffset,
+    Qualifier=qualifier,
     CensorCode=censorCode,
     DateTimeUTC=DateTimeUTC,
     MethodCode=methodCode,

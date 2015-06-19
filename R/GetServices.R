@@ -10,7 +10,6 @@
 
 GetServices <- function() {
   catalog = "http://hiscentral.cuahsi.org/webservices/hiscentral.asmx/GetWaterOneFlowServiceInfo"
-  #text = RCurl::getURL(catalog)
   doc <- xmlRoot(xmlTreeParse(catalog, getDTD=FALSE, useInternalNodes = TRUE))
   N <- xmlSize(doc)
 
