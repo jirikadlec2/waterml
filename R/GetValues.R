@@ -13,6 +13,21 @@
 #' @param endDate (optional) The end date in "yyyy-mm-dd" format
 #' @param daily (optional) If you set daily="max", daily="min" or daily="mean", then the
 #' data values are aggreagted to daily time step.
+#' @return a data.frame of data values with the following columns:
+#' \itemize{
+#' \item time: The local date/time of the observation. The data type is POSIXct.
+#' \item DataValue: The observed data value
+#' \item UTCOffset: The difference between local time and UTC time in hours
+#' \item CensorCode: The code for censored observations. Possible values are nc (not censored),
+#'             gt (greater than), lt (less than),
+#'             nd (non-detect), pnq (present but not quantified)
+#' \item DateTimeUTC: The UTC time of the observation. The data type is POSIXct.
+#' \item MethodCode: The code of the method or instrument used for the observation
+#' \item SourceCode: The code of the data source
+#' \item QualityControlLevelCode: The code of the quality control level. Possible values are
+#'             -9999 (Unknown), 0 (Raw data), 1 (Quality controlled data),
+#'             2 (Derived products), 3 (Interpreted products), 4 (Knowledge products)
+#' }
 #' @keywords waterml
 #' @export
 #' @examples
@@ -54,6 +69,9 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
                                                           variable=variableCode,
                                                           startDate=startDate,
                                                           endDate=endDate))
+
+    print(paste("downloading values from:", url, "..."))
+
     download.time <- system.time(response <- POST(url, body = envelope,
                      add_headers("Content-Type" = "text/xml",
                                  "SOAPAction" = SOAPAction))
@@ -93,22 +111,57 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
   # extract the data columns with XPath
   val = xpathSApply(doc, "//sr:value", xmlValue, namespaces=ns)
-  valueCount <- length(val)
-  if (valueCount > 10000) {
-    print(paste("found", valueCount,"data values"))
+  N <- length(val)
+  bigData <- 10000
+  if (N > bigData) {
+    print(paste("found", N,"data values"))
+    print("processing dateTime...")
   }
-  dateTime = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
-  censorCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="censorCode", namespaces=ns)
-  dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
-  methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodCode", namespaces=ns)
-  sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceCode", namespaces=ns)
-  qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevelCode", namespaces=ns)
+  dateTimeRaw = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+  DateTime <- as.POSIXct(strptime(dateTimeRaw, "%Y-%m-%dT%H:%M:%S"))
 
-  #convert the date/time
-  DateTime <- as.POSIXct(strptime(dateTime, "%Y-%m-%dT%H:%M:%S"))
-  DateTimeUTC <- as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S"))
-  UTCOffset = DateTime - DateTimeUTC
-  nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue", xmlValue, namespaces=ns))
+  if (N > bigData) { print("processing censorCode...") }
+  censorCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="censorCode", namespaces=ns)
+
+  if (version == "1.1") {
+
+    if (N > bigData) { print("processing dateTimeUTC...") }
+    dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
+
+    if (N > bigData) { print("converting date and time...") }
+    DateTimeUTC <- as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S"))
+    UTCOffset = DateTime - DateTimeUTC
+
+    if (N > bigData) { print("processing methodCode...") }
+    methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodCode", namespaces=ns)
+
+    if (N > bigData) { print("processing sourceCode...") }
+    sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceCode", namespaces=ns)
+
+    if (N > bigData) { print("processing qualityControlLevelCode...") }
+    qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevelCode", namespaces=ns)
+
+    nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue", xmlValue, namespaces=ns))
+
+  } else {
+
+    #WaterML 1.0 usually doesn't provide information on UTC offset
+    DateTimeUTC <- DateTime
+    UTCOffset = rep(0, N)
+
+    if (N > bigData) { print ("processing methodID...")}
+    methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodID", namespaces=ns)
+
+    if (N > bigData) { print ("processing sourceID...")}
+    sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceID", namespaces=ns)
+
+    if (N > bigData) { print ("processing qualityControlLevel...")}
+    qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevel", namespaces=ns)
+
+    nodata = as.numeric(xpathSApply(doc, "//sr:NoDataValue", xmlValue, namespaces=ns))
+  }
+
+
   #make the data frame
   df <- data.frame(
     time=DateTime,
@@ -119,7 +172,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     MethodCode=methodCode,
     SourceCode=sourceCode,
     QualityControlLevelCode=qcCode,
-    stringsAsFactors=FALSE
+    stringsAsFactors=TRUE
   )
 
   if (nrow(df) == 0) {

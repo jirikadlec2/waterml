@@ -24,6 +24,23 @@ function and use the FullVariableCode field}
 \item{daily}{(optional) If you set daily="max", daily="min" or daily="mean", then the
 data values are aggreagted to daily time step.}
 }
+\value{
+a data.frame of data values with the following columns:
+\itemize{
+\item time: The local date/time of the observation. The data type is POSIXct.
+\item DataValue: The observed data value
+\item UTCOffset: The difference between local time and UTC time in hours
+\item CensorCode: The code for censored observations. Possible values are nc (not censored),
+            gt (greater than), lt (less than),
+            nd (non-detect), pnq (present but not quantified)
+\item DateTimeUTC: The UTC time of the observation. The data type is POSIXct.
+\item MethodCode: The code of the method or instrument used for the observation
+\item SourceCode: The code of the data source
+\item QualityControlLevelCode: The code of the quality control level. Possible values are
+            -9999 (Unknown), 0 (Raw data), 1 (Quality controlled data),
+            2 (Derived products), 3 (Interpreted products), 4 (Knowledge products)
+}
+}
 \description{
 This function gets the time series data values from the WaterML web service
 }

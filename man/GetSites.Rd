@@ -23,6 +23,22 @@ bounding box in decimal degrees. Allowed values are between -180.0 and +180.0}
 \item{north}{Optional parameter: The north latitude of the geographic
 bounding box in decimal degrees. Allowed values are between -90.0 and +90.0}
 }
+\value{
+a data.frame of sites. The data.frame has the following columns:
+\itemize{
+\item SiteID: The site ID in the original database
+\item SiteName: The name of the site
+\item SiteCode: A short unique code of the site
+\item FullSiteCode: The complete unique code of the site in the format NETWORK:CODE.
+              Use this value in the GetSiteInfo and GetValues functions
+\item Latitude:  The WGS84 latitude in decimal degrees
+\item Longitude: The WGS84 longitude in decimal degrees
+\item Elevation: The elevation of the site above sea level in meters
+\item State:     Only for sites in the USA: the state of the site
+\item County:    Only for sites in the USA: The county of the site
+\item Comments:  Additional comments about the sites (note: this field is often empty)
+}
+}
 \description{
 This function gets the table of sites from the WaterML web service
 }
