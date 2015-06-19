@@ -54,10 +54,13 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
                                                           variable=variableCode,
                                                           startDate=startDate,
                                                           endDate=endDate))
-    response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
+    download.time <- system.time(response <- POST(url, body = envelope,
+                     add_headers("Content-Type" = "text/xml",
+                                 "SOAPAction" = SOAPAction))
+    )
     status.code <- http_status(response)$category
-    print(paste("GetValues from", url, "...", status.code))
+
+    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
 
   } else {
     #REST
@@ -90,35 +93,42 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
   # extract the data columns with XPath
   val = xpathSApply(doc, "//sr:value", xmlValue, namespaces=ns)
+  valueCount <- length(val)
+  if (valueCount > 10000) {
+    print(paste("found", valueCount,"data values"))
+  }
   dateTime = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
-  timeOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
   censorCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="censorCode", namespaces=ns)
-  dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+  dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
   methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodCode", namespaces=ns)
   sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceCode", namespaces=ns)
   qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevelCode", namespaces=ns)
 
-  #nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue"))
+  #convert the date/time
+  DateTime <- as.POSIXct(strptime(dateTime, "%Y-%m-%dT%H:%M:%S"))
+  DateTimeUTC <- as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S"))
+  UTCOffset = DateTime - DateTimeUTC
+  nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue", xmlValue, namespaces=ns))
   #make the data frame
   df <- data.frame(
-    DateTime=as.POSIXct(strptime(dateTime, "%Y-%m-%dT%H:%M:%S")),
+    time=DateTime,
     DataValue=as.numeric(val),
-    UTCOffset=as.numeric(timeOffset),
+    UTCOffset=UTCOffset,
     CensorCode=censorCode,
-    DateTimeUTC=as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S")),
+    DateTimeUTC=DateTimeUTC,
     MethodCode=methodCode,
     SourceCode=sourceCode,
     QualityControlLevelCode=qcCode,
     stringsAsFactors=FALSE
   )
 
-  if (nrow(df) > 0) {
+  if (nrow(df) == 0) {
     print(paste("no data values found:", url))
     return(NULL)
   }
 
   #normal case: no aggregation
-  df[df$DataValue == noData,2] <- NA
+  df[df$DataValue == nodata,2] <- NA
 
   #special case: daily data aggregation
   if (!is.null(daily)) {
