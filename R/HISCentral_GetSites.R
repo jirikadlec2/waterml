@@ -37,8 +37,8 @@
 #' @keywords waterml
 #' @export
 #' @examples
-#' #Getting all sites from Czechia (central Europe) from the GLDAS web service
-#' sites <- HISCentral_GetSites(west=12.0, south=48.0, east=18.0, north=51.0, serviceID=262)
+#' #Getting all sites from the (14.1E, 49.8N, 14.6E, 50.2N) bounding box from the GLDAS web service
+#' sites <- HISCentral_GetSites(west=14.1, south=49.8, east=14.6, north=50.2, serviceID=262)
 
 HISCentral_GetSites <- function(west=-180, south=-90, east=180, north=90,
                                 serviceID=NULL, keyword=NULL, IncludeServerDetails=TRUE) {

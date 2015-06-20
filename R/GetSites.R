@@ -43,8 +43,11 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
 
+  versionInfo <- WaterOneFlowVersion(server)
+  version <- versionInfo$Version
+
   #special case: WaterML 1.0 and bounding box: Delegate call to HIS Central
-  if (!is.null(west) & !is.null(south) & !is.null(north) & !is.null(east)) {
+  if (!is.null(west) & !is.null(south) & !is.null(north) & !is.null(east) & version=="1.0") {
     services <- GetServices()
     serv <- services[services$url==server,]
     servID <- serv$id

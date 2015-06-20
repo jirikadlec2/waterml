@@ -51,8 +51,8 @@ a data.frame of sites. The data.frame has the following columns:
 This function gets the table of sites from the HIS Central catalog
 }
 \examples{
-#Getting all sites from Czechia (central Europe) from the GLDAS web service
-sites <- HISCentral_GetSites(west=12.0, south=48.0, east=18.0, north=51.0, serviceID=262)
+#Getting all sites from the (14.1E, 49.8N, 14.6E, 50.2N) bounding box from the GLDAS web service
+sites <- HISCentral_GetSites(west=14.1, south=49.8, east=14.6, north=50.2, serviceID=262)
 }
 \keyword{waterml}
 
