@@ -40,9 +40,17 @@
 #' v <- GetValues("http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060&startDT=2015-01-01")
 
 GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NULL, daily=NULL) {
-  m <- regexpr(".asmx", server)
-  base.url <- substr(server, 0, m+nchar(".asmx")-1)
-  values.url <- paste(base.url, "/GetValuesObject", sep="")
+
+  # trim any leading and trailing whitespaces in server
+  server <- gsub("^\\s+|\\s+$", "", server)
+
+  SOAP <- TRUE
+
+  # if server ends with .asmx, we also assume that the service is SOAP and we add ?WSDL
+  m1 <- regexpr("asmx$", server)
+  if (m1 > 1) {
+    server <- paste(server, "WSDL", sep="?")
+  }
 
   #check startDate, endDate if it is null
   startDateParam <- ifelse(is.null(startDate), "", strftime(as.POSIXct(startDate), "%Y-%m-%dT%H:%M:%S"))

@@ -12,9 +12,9 @@
 #'  bounding box in decimal degrees. Allowed values are between -180.0 and +180.0
 #' @param north The north latitude of the geographic
 #'  bounding box in decimal degrees. Allowed values are between -90.0 and +90.0
-#' @param ServiceID (optional): The ID of the service on HIS Central. To get the service ID,
+#' @param serviceID (optional): The ID of the service on HIS Central. To get the service ID,
 #'  use the id column in the output of the GetServices() function.
-#' @param Keyword (optional): The concept keyword (common name of variable) for
+#' @param keyword (optional): The concept keyword (common name of variable) for
 #'  searching the sites on HIS Central. Examples include Temperature, Precipitation, Snow Depth,... If the Keyword is not
 #'  specified then sites with any variable will be returned.
 #' @param IncludeServerDetails=TRUE (optional): If set to TRUE, then the output will
@@ -38,25 +38,25 @@
 #' @export
 #' @examples
 #' #Getting all sites from Czechia (central Europe) from the GLDAS web service
-#' sites <- HISCentral_GetSites(west=12.0, south=48.0, east=18.0, north=51.0, ServiceID=262)
+#' sites <- HISCentral_GetSites(west=12.0, south=48.0, east=18.0, north=51.0, serviceID=262)
 
 HISCentral_GetSites <- function(west=-180, south=-90, east=180, north=90,
-                                ServiceID=NULL, IncludeServerDetails=TRUE) {
+                                serviceID=NULL, keyword=NULL, IncludeServerDetails=TRUE) {
 
   catalog = "http://hiscentral.cuahsi.org/webservices/hiscentral.asmx/GetSitesInBox2"
 
   #create the URL
-  servID = ServiceID
-  if (is.null(ServiceID)) {
+  servID = serviceID
+  if (is.null(serviceID)) {
     servID=""
   }
-  if (is.null(Keyword)) {
-    Keyword=""
+  if (is.null(keyword)) {
+    keyword=""
   }
   queryParameters <- list(xmin=west, ymin=south, xmax=east, ymax=north,
-                          networkIDs=servID, conceptKeyword=Keyword)
+                          networkIDs=servID, conceptKeyword=keyword)
   url <- paste(catalog, "?", "&xmin=", west, "&ymin=", south, "&xmax=", east,
-               "&ymax=", north, "networkIDs=", servID, "&conceptKeyword=", Keyword,
+               "&ymax=", north, "networkIDs=", servID, "&conceptKeyword=", keyword,
                sep="")
 
   print(paste("searching sites from:", url, "..."))
@@ -112,18 +112,27 @@ HISCentral_GetSites <- function(west=-180, south=-90, east=180, north=90,
   Latitude <- xpathSApply(doc, "//sr:Latitude", xmlValue, namespaces=ns)
   Longitude = xpathSApply(doc, "//sr:Longitude", xmlValue, namespaces=ns)
 
-  ServCode <- xpathSApply(doc, "//sr:servCode", xmlValue, namespaces=ns)
-  ServURL <- xpathSApply(doc, "//sr:servURL", xmlValue, namespaces=ns)
-
-  df <- data.frame(
-    SiteName = SiteName,
-    SiteCode = SiteCode,
-    FullSiteCode = FullSiteCode,
-    Latitude = as.numeric(Latitude),
-    Longitude = as.numeric(Longitude),
-    ServCode = ServCode,
-    ServURL = ServURL,
-    stringsAsFactors = TRUE)
+  if (IncludeServerDetails == TRUE) {
+    ServCode <- xpathSApply(doc, "//sr:servCode", xmlValue, namespaces=ns)
+    ServURL <- xpathSApply(doc, "//sr:servURL", xmlValue, namespaces=ns)
+    df <- data.frame(
+      SiteName = SiteName,
+      SiteCode = SiteCode,
+      FullSiteCode = FullSiteCode,
+      Latitude = as.numeric(Latitude),
+      Longitude = as.numeric(Longitude),
+      ServCode = ServCode,
+      ServURL = ServURL,
+      stringsAsFactors = FALSE)
+  } else {
+    df <- data.frame(
+      SiteName = SiteName,
+      SiteCode = SiteCode,
+      FullSiteCode = FullSiteCode,
+      Latitude = as.numeric(Latitude),
+      Longitude = as.numeric(Longitude),
+      stringsAsFactors = FALSE)
+  }
 
   return(df)
 }

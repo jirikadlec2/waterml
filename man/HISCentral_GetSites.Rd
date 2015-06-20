@@ -5,7 +5,7 @@
 \title{HISCentral_GetSites}
 \usage{
 HISCentral_GetSites(west = -180, south = -90, east = 180, north = 90,
-  ServiceID = NULL, IncludeServerDetails = TRUE)
+  serviceID = NULL, keyword = NULL, IncludeServerDetails = TRUE)
 }
 \arguments{
 \item{west}{The west longitude of the geographic
@@ -20,10 +20,10 @@ bounding box in decimal degrees. Allowed values are between -180.0 and +180.0}
 \item{north}{The north latitude of the geographic
 bounding box in decimal degrees. Allowed values are between -90.0 and +90.0}
 
-\item{ServiceID}{(optional): The ID of the service on HIS Central. To get the service ID,
+\item{serviceID}{(optional): The ID of the service on HIS Central. To get the service ID,
 use the id column in the output of the GetServices() function.}
 
-\item{Keyword}{(optional): The concept keyword (common name of variable) for
+\item{keyword}{(optional): The concept keyword (common name of variable) for
 searching the sites on HIS Central. Examples include Temperature, Precipitation, Snow Depth,... If the Keyword is not
 specified then sites with any variable will be returned.}
 
@@ -52,7 +52,7 @@ This function gets the table of sites from the HIS Central catalog
 }
 \examples{
 #Getting all sites from Czechia (central Europe) from the GLDAS web service
-sites <- HISCentral_GetSites(west=12.0, south=48.0, east=18.0, north=51.0, ServiceID=262)
+sites <- HISCentral_GetSites(west=12.0, south=48.0, east=18.0, north=51.0, serviceID=262)
 }
 \keyword{waterml}
 

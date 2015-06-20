@@ -43,6 +43,31 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
 
+  #special case: WaterML 1.0 and bounding box: Delegate call to HIS Central
+  if (!is.null(west) & !is.null(south) & !is.null(north) & !is.null(east)) {
+    services <- GetServices()
+    serv <- services[services$url==server,]
+    servID <- serv$id
+    sitesDF <- HISCentral_GetSites(west, south, east, north,
+                                   serviceID = servID,keyword=NULL,
+                                   IncludeServerDetails = FALSE)
+    sitesDF$SiteID <- sitesDF$SiteCode
+    sitesDF$Elevation <- NA
+    sitesDF$State <- NA
+    sitesDF$County <- NA
+    sitesDF$Comments <- NA
+    return (data.frame(SiteID=sitesDF$SiteCode,
+                       SiteName=sitesDF$SiteName,
+                       SiteCode=sitesDF$SiteCode,
+                       FullSiteCode=sitesDF$FullSiteCode,
+                       Latitude=sitesDF$Latitude,
+                       Longitude=sitesDF$Longitude,
+                       Elevation=NA,
+                       State=NA,
+                       County=NA,
+                       Comments=NA))
+  }
+
   # if server ends with ?WSDL or ?wsdl, we assume that service is SOAP
   # otherwise, assume that service is REST
   SOAP <- TRUE
@@ -71,6 +96,7 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
     #choose the right SOAP web method based on WaterML version and parameters
     if (version == "1.0") {
       methodName <- "GetSites"
+
       envelope <- MakeSOAPEnvelope(namespace, methodName)
     } else {
       if (is.null(west) | is.null(south) | is.null(north) | is.null(east)) {

@@ -17,8 +17,8 @@ available site codes, see GetSites() function and use the FullSiteCode field.}
 This function gets the table variables measured at a specific site from the WaterML web service
 }
 \examples{
-GetSiteInfo("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
-             siteCode="default:Ru5BMMA")
+server <- "http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx"
+siteInfo <- GetSiteInfo(server, siteCode="default:Ru5BMMA")
 }
 \keyword{waterml}
 
