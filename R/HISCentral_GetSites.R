@@ -17,7 +17,7 @@
 #' @param keyword (optional): The concept keyword (common name of variable) for
 #'  searching the sites on HIS Central. Examples include Temperature, Precipitation, Snow Depth,... If the Keyword is not
 #'  specified then sites with any variable will be returned.
-#' @param IncludeServerDetails=TRUE (optional): If set to TRUE, then the output will
+#' @param IncludeServerDetails (optional): If set to TRUE, then the output will
 #' include the servCode and servURL for each site. If set to FALSE, then we assume
 #' that all sites are from the same server and the servURL and servCode are not included.
 #' @return a data.frame of sites. The data.frame has the following columns:

@@ -27,7 +27,7 @@ use the id column in the output of the GetServices() function.}
 searching the sites on HIS Central. Examples include Temperature, Precipitation, Snow Depth,... If the Keyword is not
 specified then sites with any variable will be returned.}
 
-\item{IncludeServerDetails=TRUE}{(optional): If set to TRUE, then the output will
+\item{IncludeServerDetails}{(optional): If set to TRUE, then the output will
 include the servCode and servURL for each site. If set to FALSE, then we assume
 that all sites are from the same server and the servURL and servCode are not included.}
 }

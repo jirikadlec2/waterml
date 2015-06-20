@@ -50,7 +50,9 @@ v <- GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuah
            site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
            daily="max")
 #example 2: Get values from an external REST URL (in this case the Provo USGS NWIS site id 10163000)
-v <- GetValues("http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060&startDT=2015-01-01")
+url<-"http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060&
+startDT=2015-01-01"
+v <- GetValues(url)
 }
 \keyword{waterml}
 
