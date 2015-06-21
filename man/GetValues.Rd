@@ -5,7 +5,7 @@
 \title{GetValues}
 \usage{
 GetValues(server, siteCode, variableCode, startDate = NULL, endDate = NULL,
-  daily = NULL)
+  methodID = NULL, sourceID = NULL, qcID = NULL, daily = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .asmx,
@@ -20,6 +20,19 @@ function and use the FullVariableCode field}
 \item{startDate}{(optional) The start date in "yyyy-mm-dd" format}
 
 \item{endDate}{(optional) The end date in "yyyy-mm-dd" format}
+
+\item{methodID}{(optional) The ID of the observation method. To get a list of possible method IDs, see
+methodID column in the output of GetSiteInfo(). If methodID is not specified, then the observations
+in the output data.frame won't be filtered by method.}
+
+\item{sourceID}{(optional) The ID of the source. To get a list of possible source IDs, see
+sourceID column in the output of GetSiteInfo(). If sourceID is not specified, then the observations
+in the output data.frame won't be filtered by source.}
+
+\item{qcID}{(optional) The ID of the quality control level. Typically 0 is used for raw data and 1 is
+used for quality controlled data. To get a list of possible quality control level IDs, see
+QualityControlLevelID column in the output of GetSiteInfo(). If qcID is not specified, then the
+observations in the output data.frame won't be filtered by quality control level.}
 
 \item{daily}{(optional) If you set daily="max", daily="min" or daily="mean", then the
 data values are aggreagted to daily time step.}

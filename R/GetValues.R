@@ -12,6 +12,16 @@
 #'  function and use the FullVariableCode field
 #' @param startDate (optional) The start date in "yyyy-mm-dd" format
 #' @param endDate (optional) The end date in "yyyy-mm-dd" format
+#' @param methodID (optional) The ID of the observation method. To get a list of possible method IDs, see
+#' methodID column in the output of GetSiteInfo(). If methodID is not specified, then the observations
+#' in the output data.frame won't be filtered by method.
+#' @param sourceID (optional) The ID of the source. To get a list of possible source IDs, see
+#' sourceID column in the output of GetSiteInfo(). If sourceID is not specified, then the observations
+#' in the output data.frame won't be filtered by source.
+#' @param qcID (optional) The ID of the quality control level. Typically 0 is used for raw data and 1 is
+#' used for quality controlled data. To get a list of possible quality control level IDs, see
+#' QualityControlLevelID column in the output of GetSiteInfo(). If qcID is not specified, then the
+#' observations in the output data.frame won't be filtered by quality control level.
 #' @param daily (optional) If you set daily="max", daily="min" or daily="mean", then the
 #' data values are aggreagted to daily time step.
 #' @return a data.frame of data values with the following columns:
@@ -40,7 +50,8 @@
 #' url <- "http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060"
 #' v2 <- GetValues(url)
 
-GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NULL, daily=NULL) {
+GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NULL,
+                      methodID=NULL, sourceID=NULL, qcID=NULL, daily=NULL) {
 
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
@@ -74,6 +85,17 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     namespace <- versionInfo$Namespace
     version <- versionInfo$Version
     methodName <- "GetValuesObject"
+
+    #format the variable with the methodID, sourceID, qcID parameters
+    if (!is.null(methodID)) {
+      variableCode <- paste(variableCode, ":methodCode=", methodID, sep="")
+    }
+    if (!is.null(sourceID)) {
+      variableCode <- paste(variableCode, ":sourceCode=", sourceID, sep="")
+    }
+    if (!is.null(qcID)) {
+      variableCode <- paste(variableCode, ":qualityControlLevelCode=", qcID, sep="")
+    }
 
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName, c(location=siteCode,
