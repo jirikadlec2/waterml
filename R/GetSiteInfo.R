@@ -254,9 +254,10 @@ GetSiteInfo <- function(server, siteCode) {
     Citation <- xpathSApply(doc, "//sr:Citation", xmlValue, namespaces=ns)
     if (length(Citation) < N) { Citation <- NA }
 
-    QualityControlLevelID=xpathSApply(doc, "//sr:QualityControlLevel", xmlGetAttr,
-                                      name="QualityControlLevelID", namespaces=ns)
-    QualityControlLevelCode=xpathSApply(doc, "//sr:QualityControlLevelCode", xmlValue, namespaces=ns)
+    QualityControlLevelID <- unlist(xpathSApply(doc, "//sr:QualityControlLevel", xmlGetAttr,
+                                      name="qualityControlLevelID", namespaces=ns))
+
+    QualityControlLevelCode <- xpathSApply(doc, "//sr:qualityControlLevelCode", xmlValue, namespaces=ns)
 
     if (length(QualityControlLevelID) < N & length(QualityControlLevelCode == N)) {
       QualityControlLevelID <- QualityControlLevelCode
@@ -267,8 +268,19 @@ GetSiteInfo <- function(server, siteCode) {
     if (length(QualityControlLevelID) < N) { QualityControlLevelID <- NA }
     if (length(QualityControlLevelCode) < N) { QualityControlLevelCode <- NA }
 
-    QualityControlLevelDefinition=xpathSApply(doc, "//sr:Definition", xmlValue, namespaces=ns)
+    QualityControlLevelDefinition=xpathSApply(doc, "//sr:QualityControlLevel", xmlValue, namespaces=ns)
     if (length(QualityControlLevelDefinition) < N) { QualityControlLevelDefinition <- NA }
+
+    ValueCount <- xpathSApply(doc, "//sr:valueCount", xmlValue, namespaces=ns)
+
+    BeginDateTime <- xpathSApply(doc, "//sr:beginDateTime", xmlValue, namespaces=ns)
+    EndDateTime <- xpathSApply(doc, "//sr:endDateTime", xmlValue, namespaces=ns)
+
+    BeginDateTimeUTC <- xpathSApply(doc, "//sr:beginDateTimeUTC", xmlValue, namespaces=ns)
+    if (length(BeginDateTimeUTC) == 0) { BeginDateTimeUTC <- BeginDateTime }
+
+    EndDateTimeUTC <- xpathSApply(doc, "//sr:endDateTimeUTC", xmlValue, namespaces=ns)
+    if (length(EndDateTimeUTC) == 0) { EndDateTimeUTC <- EndDateTime }
   #################################################################################################
   # END of SPECIAL CASE of WaterML 1.0                                                            #
   #################################################################################################
