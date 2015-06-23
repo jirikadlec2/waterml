@@ -135,6 +135,10 @@ GetSiteInfo <- function(server, siteCode) {
 
   SiteID <- xpathSApply(doc, "//sr:siteCode", xmlGetAttr, name="siteID", namespaces=ns)
   SiteID <- unlist(SiteID)
+  numSiteIDs <- length(SiteID)
+  if (numSiteIDs != N) {
+    SiteID <- SiteCode
+  }
 
   Latitude <- xpathSApply(doc, "//sr:latitude", xmlValue, namespaces=ns)
   Longitude = xpathSApply(doc, "//sr:longitude", xmlValue, namespaces=ns)
