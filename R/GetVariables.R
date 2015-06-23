@@ -5,6 +5,27 @@
 #' @import XML
 #' @param server The URL of the web service ending with ?WSDL,
 #'  for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL
+#' @return a data.frame of variables with the following columns:
+#' \tabular{lll}{
+#' VariableCode \tab character \tab Short code of the variable \cr
+#' FullVariableCode \tab character \tab The full variable code, for example: SNOTEL:897. Use this value
+#'                   as the variableCode parameter in GetValues() function.
+#'                   \cr
+#' VariableName \tab character \tab The name of the variable \cr
+#' ValueType \tab character \tab the type of observation: Field Observation or Derived Value \cr
+#' DataType \tab character \tab the aggregate data type: Average, Continuous, Sporadic.. \cr
+#' GeneralCategory \tab character \tab the general category of the measurements: Climate, Water Quality.. \cr
+#' SampleMedium \tab character \tab the sample medium, for example water, atmosphere, soil.. \cr
+#' UnitName \tab character \tab The name of the measurement units \cr
+#' UnitType \tab character \tab the type of the measurement units \cr
+#' UnitAbbreviation \tab character \tab The abbreviation of the measurement units (m, cm, in..) \cr
+#' NoDataValue \tab numeric \tab The value that indicates missing data \cr
+#' IsRegular \tab boolean \tab TRUE if the measurements are regular, FALSE otherwise \cr
+#' TimeUnitName \tab character \tab The name of the time units \cr
+#' TimeUnitAbbreviation \tab character \tab The time units abbreviation \cr
+#' TimeSupport \tab character \tab The length of the time period over which one measurement is taken \cr
+#' Speciation \tab character \tab The chemical sample speciation (as nitrogen, as phosphorus..) \cr
+#' }
 #' @keywords WaterML
 #' @export
 #' @examples
