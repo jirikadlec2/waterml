@@ -178,11 +178,10 @@ GetSiteInfo <- function(server, siteCode) {
 
   VariableName <- xpathSApply(doc, "//sr:variableName", xmlValue, namespaces=ns)
 
-  VariableID <- xpathSApply(doc, "//sr:variableCode", xmlGetAttr, name="variableID", namespaces=ns)
-  VariableID <- unlist(VariableID)
+  VariableID <- unlist(xpathSApply(doc, "//sr:variableCode", xmlGetAttr, name="variableID", namespaces=ns))
   if (length(VariableID) == 0) { VariableID <- VariableCode }
 
-  Vocabulary <- xpathSApply(doc, "//sr:variableCode", xmlGetAttr, name="vocabulary", namespaces=ns)
+  Vocabulary <- unlist(xpathSApply(doc, "//sr:variableCode", xmlGetAttr, name="vocabulary", namespaces=ns))
 
   #######################################################################################
   # START of SPECIAL CASE: process variable: use special case for WaterML 1.0           #
@@ -215,20 +214,32 @@ GetSiteInfo <- function(server, siteCode) {
       v <- unlist(xmlToList(varObj))
       ValueType[i] <- v["valueType"]
       DataType[i] <- v["dataType"]
-      GeneralCategory[i] <- v["generalCategory"]
-      SampleMedium[i] <- v["sampleMedium"]
+      if (!is.null(v["generalCategory"])) {
+        GeneralCategory[i] <- v["generalCategory"]
+      }
+      if (!is.null(v["sampleMedium"])) {
+        SampleMedium[i] <- v["sampleMedium"]
+      }
       UnitName[i] <- v["units.text"]
-      UnitType[i] <- v["units..attrs.unitsType"]
+      if (!is.null(v["units..attrs.unitsType"])) {
+        UnitType[i] <- v["units..attrs.unitsType"]
+      }
       UnitAbbreviation[i] <- v["units..attrs.unitsAbbreviation"]
       IsRegular[i] <- ifelse(is.na(v["timeSupport..attrs.isRegular"]), v["timeSupport.isRegular"],
                                 v["timeSupport..attrs.isRegular"])
       TimeUnitName[i] <- v["timeSupport.unit.UnitDescription"]
+      if (is.na(TimeUnitName[i])) {
+        TimeUnitName[i] <- v["timeSupport.unit.UnitName"]
+      }
       TimeUnitAbbreviation[i] <- v["timeSupport.unit.UnitAbbreviation"]
       TimeSupport[i] <- v["timeSupport.timeInterval"]
-      NoDataValue[i] <- as.numeric(v["NoDataValue"])
+
+      if (!is.null(v["NoDataValue"])) {
+        NoDataValue[i] <- as.numeric(v["NoDataValue"])
+      }
     }
 
-    MethodID <- xpathSApply(doc, "//sr:Method", xmlGetAttr, name="methodID", namespaces=ns)
+    MethodID <- unlist(xpathSApply(doc, "//sr:Method", xmlGetAttr, name="methodID", namespaces=ns))
     MethodCode <- xpathSApply(doc, "//sr:MethodCode", xmlValue, namespaces=ns)
 
     MethodDescription <- xpathSApply(doc, "//sr:MethodDescription", xmlValue, namespaces=ns)
@@ -246,7 +257,7 @@ GetSiteInfo <- function(server, siteCode) {
     if (length(MethodID) < N) { MethodID <- NA }
     if (length(MethodCode) < N) { MethodCode <- NA }
 
-    SourceID <- xpathSApply(doc, "//sr:Source", xmlGetAttr, name="sourceID", namespaces=ns)
+    SourceID <- unlist(xpathSApply(doc, "//sr:Source", xmlGetAttr, name="sourceID", namespaces=ns))
     if (length(SourceID) < N) { SourceID <- NA }
 
     Organization <- xpathSApply(doc, "//sr:Organization", xmlValue, namespaces=ns)
@@ -312,8 +323,7 @@ GetSiteInfo <- function(server, siteCode) {
 
     NoDataValue <- xpathSApply(doc, "//sr:noDataValue", xmlValue, namespaces=ns)
 
-    IsRegular <- xpathSApply(doc, "//sr:timeScale", xmlGetAttr, name="isRegular", namespaces=ns)
-    IsRegular <- unlist(IsRegular)
+    IsRegular <- unlist(xpathSApply(doc, "//sr:timeScale", xmlGetAttr, name="isRegular", namespaces=ns))
     if (length(IsRegular) < N) {
       IsRegular <- (DataType != "Sporadic")
     }
@@ -336,7 +346,7 @@ GetSiteInfo <- function(server, siteCode) {
 
     ValueCount <- xpathSApply(doc, "//sr:valueCount", xmlValue, namespaces=ns)
 
-    MethodID <- xpathSApply(doc, "//sr:method", xmlGetAttr, name="methodID", namespaces=ns)
+    MethodID <- unlist(xpathSApply(doc, "//sr:method", xmlGetAttr, name="methodID", namespaces=ns))
 
     MethodCode <- xpathSApply(doc, "//sr:methodCode", xmlValue, namespaces=ns)
 
@@ -355,7 +365,7 @@ GetSiteInfo <- function(server, siteCode) {
     if (length(MethodID) < N) { MethodID <- NA }
     if (length(MethodCode) < N) { MethodCode <- NA }
 
-    SourceID <- xpathSApply(doc, "//sr:source", xmlGetAttr, name="sourceID", namespaces=ns)
+    SourceID <- unlist(xpathSApply(doc, "//sr:source", xmlGetAttr, name="sourceID", namespaces=ns))
     if (length(SourceID) < N) { SourceID <- NA }
 
     Organization <- xpathSApply(doc, "//sr:organization", xmlValue, namespaces=ns)
@@ -367,8 +377,8 @@ GetSiteInfo <- function(server, siteCode) {
     Citation <- xpathSApply(doc, "//sr:citation", xmlValue, namespaces=ns)
     if (length(Citation) < N) { Citation <- NA }
 
-    QualityControlLevelID=xpathSApply(doc, "//sr:qualityControlLevel", xmlGetAttr,
-                                      name="qualityControlLevelID", namespaces=ns)
+    QualityControlLevelID=unlist(xpathSApply(doc, "//sr:qualityControlLevel", xmlGetAttr,
+                                      name="qualityControlLevelID", namespaces=ns))
     QualityControlLevelCode=xpathSApply(doc, "//sr:qualityControlLevelCode", xmlValue, namespaces=ns)
 
     if (length(QualityControlLevelID) < N & length(QualityControlLevelCode == N)) {
@@ -428,6 +438,11 @@ GetSiteInfo <- function(server, siteCode) {
                    beginDateTimeUTC=as.POSIXct(strptime(BeginDateTimeUTC, "%Y-%m-%dT%H:%M:%S")),
                    endDateTimeUTC=as.POSIXct(strptime(EndDateTimeUTC, "%Y-%m-%dT%H:%M:%S")),
                    stringsAsFactors=FALSE)
+
+  if (nrow(df) == 0) {
+    print(paste("ERROR: 0 time series found for site:", siteCode))
+    return(NULL)
+  }
 
   return(df)
 }
