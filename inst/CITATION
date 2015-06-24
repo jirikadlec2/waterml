@@ -1,0 +1,20 @@
+citHeader("To cite WaterML in publications use:")
+
+citEntry(entry = "Article",
+  title        = "{WaterML} R package for managing ecological experiment data on a CUAHSI HydroServer",
+  author       = personList(as.person("Jiri Kadlec"),
+                   as.person("Bryn StClair"),
+                   as.person("Daniel P. Ames"),
+                   as.person("Richard A. Gill")),
+  journal      = "Ecological Informatics",
+  year         = "2015",
+  volume       = "28",
+  pages        = "19--28",
+  url          = "http://www.sciencedirect.com/science/article/pii/S1574954115000801",
+  doi          = "doi:10.1016/j.ecoinf.2015.05.002",
+  textVersion  =
+  paste("Jiri Kadlec, Bryn StClair, Daniel P.Ames, Richard A. Gill (2015).",
+        "WaterML R package for managing ecological experiment data on a CUAHSI HydroServer.",
+        "Ecological Informatics, 28, 19-28.",
+        "doi:10.1016/j.ecoinf.2015.05.002")
+)
