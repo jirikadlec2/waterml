@@ -100,8 +100,8 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName, c(location=siteCode,
                                                           variable=variableCode,
-                                                          startDate=startDate,
-                                                          endDate=endDate))
+                                                          startDate=startDateParam,
+                                                          endDate=endDateParam))
 
     print(paste("downloading values from:", url, "..."))
 
