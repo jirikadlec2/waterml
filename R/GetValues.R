@@ -73,7 +73,10 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   }
 
   #save variableCode for possible future use
-  original_variable_code <- variableCode
+  original_variable_code <- NULL
+  if (!is.null(variablecode)) {
+    original_variable_code <- variableCode
+  }
 
   #check startDate, endDate if it is null
   startDateParam <- ifelse(is.null(startDate), "", strftime(as.POSIXct(startDate), "%Y-%m-%dT%H:%M:%S"))

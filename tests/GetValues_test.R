@@ -36,10 +36,10 @@ for (i in 1:N) {
                       methodID=method_code, sourceID=source_code, qcID=qc_code)
 
   #check values status
-  values_result$values_download_time[i] <- attr(siteinfo, "download.time")
-  values_result$values_download_status[i] <- attr(siteinfo, "download.status")
-  values_result$values_parse_time[i] <- attr(siteinfo, "parse.time")
-  values_result$values_parse_status[i] <- attr(siteinfo, "parse.status")
+  values_result$values_download_time[i] <- attr(values, "download.time")
+  values_result$values_download_status[i] <- attr(values, "download.status")
+  values_result$values_parse_time[i] <- attr(values, "parse.time")
+  values_result$values_parse_status[i] <- attr(values, "parse.status")
   num_values <- nrow(values)
   values_result$num_values[i] <- num_values
 }
