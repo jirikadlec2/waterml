@@ -143,6 +143,20 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   # specify the namespace information
   ns <- WaterOneFlowNamespace(version)
 
+  #try to find faultstring to look for an error
+  fault <- xpathSApply(doc, "//soap:Fault", xmlValue, namespaces=ns)
+  if (length(fault) > 0) {
+    print(paste("SERVER ERROR in GetValues ", as.character(fault), sep=":"))
+    return(NULL)
+  }
+
+  #again check for the status code
+  if (status.code == "server error") {
+    print(paste("SERVER ERROR in GetValues ", http_status(response)$message))
+    return(NULL)
+  }
+
+
   # extract the data columns with XPath
   val = xpathSApply(doc, "//sr:value", xmlValue, namespaces=ns)
   N <- length(val)
@@ -164,7 +178,12 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   qualifier <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualifiers", namespaces=ns)
   qualifier <- unlist(qualifier)
   if (is.null(qualifier)) {
-    qualifier <- rep("nc", N)
+    qualifier <- rep(NA, N)
+  }
+  # currently we require that all values have a qualifier attached to it,
+  # or none of the values have a qualifier
+  if (length(qualifier) < N) {
+    qualifier <- rep(NA, N)
   }
 
   if (version == "1.1") {
@@ -197,16 +216,23 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
     #WaterML 1.0 usually doesn't provide information on UTC offset
     DateTimeUTC <- DateTime
-    UTCOffset = rep(0, N)
+    UTCOffset <- rep(0, N)
 
     if (N > bigData) { print ("processing methodID...")}
-    methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodID", namespaces=ns)
+    methodCode <-  xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodID", namespaces=ns)
+    methodCode <- unlist(methodCode)
+    if (is.null(methodCode)) { methodCode <- NA }
 
     if (N > bigData) { print ("processing sourceID...")}
-    sourceCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceID", namespaces=ns)
+    sourceCode <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="sourceID", namespaces=ns)
+    sourceCode <- unlist(sourceCode)
+    if (is.null(sourceCode)) { sourceCode <- NA }
 
     if (N > bigData) { print ("processing qualityControlLevel...")}
     qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevel", namespaces=ns)
+    qcCode <- unlist(qcCode)
+    if (is.null(qcCode)) { qcCode <- NA }
+    if (length(qcCode) < N) { qcCode <- NA }
 
     nodata = as.numeric(xpathSApply(doc, "//sr:NoDataValue", xmlValue, namespaces=ns))
   }
