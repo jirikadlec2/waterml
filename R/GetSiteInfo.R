@@ -128,6 +128,13 @@ GetSiteInfo <- function(server, siteCode) {
   # specify the namespace information
   ns <- WaterOneFlowNamespace(version)
 
+  #try to find faultstring to look for an error
+  fault <- xpathSApply(doc, "//soap:Fault", xmlValue, namespaces=ns)
+  if (length(fault) > 0) {
+    print(paste("SERVER ERROR in GetSiteInfo ", as.character(fault), sep=":"))
+    return(NULL)
+  }
+
   SiteName = xpathSApply(doc, "//sr:siteName", xmlValue, namespaces=ns)
   N <- length(SiteName)
   SiteCode = xpathSApply(doc, "//sr:siteCode", xmlValue, namespaces=ns)
@@ -175,6 +182,12 @@ GetSiteInfo <- function(server, siteCode) {
 
   VariableCode <- xpathSApply(doc, "//sr:variableCode", xmlValue, namespaces=ns)
   N <- length(VariableCode)
+
+  # Check for 'No Series Found' case
+  if (N==0) {
+    print(paste("NOTE: 0 time series found for site:", siteCode))
+    return(NULL)
+  }
 
   VariableName <- xpathSApply(doc, "//sr:variableName", xmlValue, namespaces=ns)
 
@@ -329,8 +342,13 @@ GetSiteInfo <- function(server, siteCode) {
     }
 
     TimeUnitName <- xpathSApply(doc, "//sr:timeScale/sr:unit/sr:unitName", xmlValue, namespaces=ns)
+    TimeUnitName <- unlist(TimeUnitName)
+    if (length(TimeUnitName) < N) { TimeUnitName <- NA }
+
     TimeUnitAbbreviation <- xpathSApply(doc,
       "//sr:timeScale/sr:unit/*[self::sr:unitsAbbreviation or self::sr:unitAbbreviation]", xmlValue, namespaces=ns)
+    TimeUnitAbbreviation <- unlist(TimeUnitAbbreviation)
+    if (length(TimeUnitAbbreviation) < N) { TimeUnitAbbreviation <- NA }
 
     TimeSupport <- xpathSApply(doc, "//sr:timeSupport", xmlValue, namespaces=ns)
     Speciation <- xpathSApply(doc, "//sr:variable/sr:speciation", xmlValue, namespaces=ns)
@@ -440,7 +458,7 @@ GetSiteInfo <- function(server, siteCode) {
                    stringsAsFactors=FALSE)
 
   if (nrow(df) == 0) {
-    print(paste("ERROR: 0 time series found for site:", siteCode))
+    print(paste("NOTE: 0 time series found for site:", siteCode))
     return(NULL)
   }
 

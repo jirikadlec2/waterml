@@ -28,6 +28,9 @@
 #' \item County:    Only for sites in the USA: The county of the site
 #' \item Comments:  Additional comments about the sites (note: this field is often empty)
 #' }
+#' The output data.frame also has attributes with information about the status:
+#' download.time, parse.time, download.status, parse.status
+#' These attributes can be used for troubleshooting WaterOneFlow/WaterML server errors.
 #' @keywords waterml
 #' @export
 #' @examples
@@ -39,6 +42,9 @@
 #' sites_subset <- GetSites(server, west=-113.0, south=35.0, east=110.0, north=40.0)
 
 GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
+
+  # declare empty return data frame
+  df <- data.frame()
 
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
@@ -124,17 +130,23 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
 
     #in case of server error, print the error and exit
     if (status.code == "server error") {
-      print(http_status(response)$message)
-      return(NULL)
+      status <- http_status(response)$message
+      print(status)
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- status
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
     }
   } else {
     # If the service is REST:
     print(paste("downloading sites from:", server, "..."))
 
+    downloaded <- FALSE
     download.time <- system.time(
-      tryCatch({
-        downloaded <- FALSE
+      err <- tryCatch({
         response <- GET(server)
+        status <- http_status(response)$message
         downloaded <- TRUE
       },error=function(e){
         print(conditionMessage(e))
@@ -142,29 +154,43 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
     )
 
     if (!downloaded) {
-      return(NULL)
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
     }
 
     status.code <- http_status(response)$category
+    attr(df, "download.time") <- download.time["elapsed"]
+    attr(df, "download.status") <- status.code
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
   }
   ######################################################
   # Parsing the WaterML XML Data                       #
   ######################################################
+  begin.parse.time <- Sys.time()
 
   print("reading sites WaterML data...")
   doc <- tryCatch({
     content(response)
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
-    return(NULL)
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
   }, error = function(e) {
     print("Error reading WaterML: Bad XML format.")
-    return(NULL)
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
   }
   )
   if (is.null(doc)) {
-    return(NULL)
+    print("Error reading WaterML: Bad XML format.")
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
   }
 
   # specify the namespace information
@@ -253,5 +279,11 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
     Comments = Comments,
     stringsAsFactors = FALSE)
 
+  end.parse.time <- Sys.time()
+  parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+  attr(df, "download.time") <- download.time["elapsed"]
+  attr(df, "download.status") <- "success"
+  attr(df, "parse.time") <- parse.time
+  attr(df, "parse.status") <- "OK"
   return(df)
 }

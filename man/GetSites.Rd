@@ -38,6 +38,9 @@ a data.frame of sites. The data.frame has the following columns:
 \item County:    Only for sites in the USA: The county of the site
 \item Comments:  Additional comments about the sites (note: this field is often empty)
 }
+The output data.frame also has attributes with information about the status:
+download.time, parse.time, download.status, parse.status
+These attributes can be used for troubleshooting WaterOneFlow/WaterML server errors.
 }
 \description{
 This function gets the table of sites from the WaterML web service
