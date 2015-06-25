@@ -1,9 +1,10 @@
 library(WaterML)
 
 services <- GetServices()
-test_result <- data.frame()
-names(test_result) <- c("server", "sites_download_time", "sites_download_status", "sites_parse_time",
-                        "sites_parse_status", "num_sites", "random_site_code")
+
+test_result <- data.frame(server=character(0), sites_download_time=numeric(0), sites_download_status=character(0),
+                          sites_parse_time=numeric(0), sites_parse_status=character(0),
+                          num_sites=numeric(0), random_site_code=character(0))
 
 for (i in 1:nrow(services)) {
   server <- services$url[i]
