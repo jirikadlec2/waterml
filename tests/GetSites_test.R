@@ -9,6 +9,11 @@ test_result <- data.frame(server=character(0), sites_download_time=numeric(0), s
 
 for (i in 1:nrow(services)) {
   server <- services$url[i]
+
+  if(nrow(test_result[test_result$server==server,]) > 0) {
+    next
+  }
+
   sites <- GetSites(server)
   sites_download_time <- attr(sites, "download.time")
   sites_download_status <- attr(sites, "download.status")

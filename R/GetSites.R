@@ -162,18 +162,21 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
     }
 
     status.code <- http_status(response)$category
-    attr(df, "download.time") <- download.time["elapsed"]
-    attr(df, "download.status") <- status.code
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
   }
+  attr(df, "download.time") <- download.time["elapsed"]
+  attr(df, "download.status") <- status.code
+
   ######################################################
   # Parsing the WaterML XML Data                       #
   ######################################################
+
   begin.parse.time <- Sys.time()
 
   print("reading sites WaterML data...")
-  doc <- tryCatch({
-    content(response)
+  doc <- NULL
+  err <- tryCatch({
+    doc <- content(response)
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
     attr(df, "parse.status") <- "Bad XML format"
