@@ -161,6 +161,8 @@ GetSiteInfo <- function(server, siteCode) {
 
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
   }
+  attr(df, "download.time") <- download.time["elapsed"]
+  attr(df, "download.status") <- status.code
 
   ######################################################
   # Parsing the WaterML XML Data                       #

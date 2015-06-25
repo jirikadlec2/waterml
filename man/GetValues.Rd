@@ -53,6 +53,11 @@ a data.frame of data values with the following columns:
             -9999 (Unknown), 0 (Raw data), 1 (Quality controlled data),
             2 (Derived products), 3 (Interpreted products), 4 (Knowledge products)
 }
+The output data.frame also has attributes with information about the status:
+download.time, parse.time, download.status, parse.status
+These attributes can be used for troubleshooting WaterOneFlow/WaterML server errors.
+If parse status is "NO_VALUES_FOUND",
+then this time series doesn't have any available data for the selected time period.
 }
 \description{
 This function gets the time series data values from the WaterML web service

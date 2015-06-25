@@ -25,7 +25,10 @@ for (i in 1:N) {
   server <- siteinfo_result$server[i]
 
   #skip servers with GetSites error
-  if(siteinfo_result$sites_parse_status != "OK") {
+  if(is.na(siteinfo_result$sites_parse_status[i])) {
+    next
+  }
+  if(siteinfo_result$sites_parse_status[i] != "OK") {
     next
   }
   site_code <- siteinfo_result$random_site_code[i]
@@ -57,4 +60,4 @@ for (i in 1:N) {
     siteinfo_result$value_count[i] <- value_count
   }
 }
-write.csv(test_result, "tests/getsiteinfo_test.csv")
+write.csv(siteinfo_result, "tests/getsiteinfo_test.csv")

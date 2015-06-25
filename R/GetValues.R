@@ -39,6 +39,11 @@
 #'             -9999 (Unknown), 0 (Raw data), 1 (Quality controlled data),
 #'             2 (Derived products), 3 (Interpreted products), 4 (Knowledge products)
 #' }
+#' The output data.frame also has attributes with information about the status:
+#' download.time, parse.time, download.status, parse.status
+#' These attributes can be used for troubleshooting WaterOneFlow/WaterML server errors.
+#' If parse status is "NO_VALUES_FOUND",
+#' then this time series doesn't have any available data for the selected time period.
 #' @keywords waterml
 #' @export
 #' @examples
@@ -52,6 +57,9 @@
 
 GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NULL,
                       methodID=NULL, sourceID=NULL, qcID=NULL, daily=NULL) {
+
+  # declare empty return data frame
+  df <- data.frame()
 
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
@@ -102,42 +110,105 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
                                                           variable=variableCode,
                                                           startDate=startDateParam,
                                                           endDate=endDateParam))
+    headers <- c("Content-Type" = "text/xml", "SOAPAction" = SOAPAction)
 
     print(paste("downloading values from:", url, "..."))
 
-    download.time <- system.time(response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml",
-                                 "SOAPAction" = SOAPAction))
+    downloaded <- FALSE
+    download.time <- system.time(
+      err <- tryCatch({
+        response <- POST(url, body = envelope, add_headers(headers))
+        status <- http_status(response)$message
+        downloaded <- TRUE
+      },error = function(e) {
+        print(conditionMessage(e))
+      }
+      )
     )
+    if (!downloaded) {
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
+
     status.code <- http_status(response)$category
-
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
-
+    # check for bad status code
+    if (status.code != "success") {
+      status.message <- http_status(response)$message
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- status.message
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
   } else {
     #REST
     version <- "1.1"
-    download.time <- system.time(response <- GET(server))
+
+    print(paste("downloading values from:", server, "..."))
+
+    downloaded <- FALSE
+    download.time <- system.time(
+      err <- tryCatch({
+        response <- GET(server)
+        status <- http_status(response)$message
+        downloaded <- TRUE
+      },error = function(e) {
+        print(conditionMessage(e))
+      }
+      )
+    )
+    if (!downloaded) {
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
+
     status.code <- http_status(response)$category
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
+    # check for bad status code
+    if (status.code != "success") {
+      status.message <- http_status(response)$message
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- status.message
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
   }
+  attr(df, "download.time") <- download.time["elapsed"]
+  attr(df, "download.status") <- status.code
 
   ######################################################
   # Parsing the WaterML XML Data                       #
   ######################################################
 
   print("reading data values WaterML ...")
-  doc <- tryCatch({
-    content(response)
+  doc <- NULL
+  err <- tryCatch({
+    doc <- content(response)
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
-    return(NULL)
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
   }, error = function(e) {
     print("Error reading WaterML: Bad XML format.")
-    return(NULL)
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
   }
   )
   if (is.null(doc)) {
-    return(NULL)
+    print("Error reading WaterML: Bad XML format.")
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
   }
 
   # specify the namespace information
@@ -147,19 +218,31 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   fault <- xpathSApply(doc, "//soap:Fault", xmlValue, namespaces=ns)
   if (length(fault) > 0) {
     print(paste("SERVER ERROR in GetValues ", as.character(fault), sep=":"))
-    return(NULL)
+    return(df)
   }
 
   #again check for the status code
   if (status.code == "server error") {
     print(paste("SERVER ERROR in GetValues ", http_status(response)$message))
-    return(NULL)
+    return(df)
   }
 
 
   # extract the data columns with XPath
   val = xpathSApply(doc, "//sr:value", xmlValue, namespaces=ns)
   N <- length(val)
+
+  # if N is 0: the document is probably not valid
+  if (N == 0) {
+    timeSeriesElement <- unlist(xpathSApply(doc, "//sr:timeSeries", xmlValue, namespaces=ns))
+    if (is.null(timeSeriesElement)) {
+      print("Error reading WaterML: Bad XML format. <timeSeries> tag not found.")
+      attr(df, "parse.status") <- "Bad XML format. <timeSeries> tag not found."
+      attr(df, "parse.time") <- 0
+      return(df)
+    }
+  }
+
   bigData <- 10000
   if (N > bigData) {
     print(paste("found", N,"data values"))
@@ -254,7 +337,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
   if (nrow(df) == 0) {
     print(paste("no data values found:", url))
-    return(NULL)
+    return(df)
   }
 
   #normal case: no aggregation
@@ -265,7 +348,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     validdata <- na.omit(df)
     if (nrow(validdata) == 0) {
       print("no valid data found!")
-      return (NULL)
+      return(df)
     }
     validdata$time <- as.Date(as.POSIXct(validdata$time))
     dailyValues <- aggregate(validdata$DataValue, list(validdata$time), daily)
