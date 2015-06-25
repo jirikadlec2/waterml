@@ -59,6 +59,10 @@
 #' beginDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available observation in this time series. \cr
 #' endDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available observation in this time series. \cr
 #' }
+#' The output data.frame also has attributes with information about the status:
+#' download.time, parse.time, download.status, parse.status
+#' These attributes can be used for troubleshooting WaterOneFlow/WaterML server errors.
+#' If parse status is "NO_SERIES_FOUND", then this site doesn't have any available data.
 #' @keywords waterml
 #' @export
 #' @examples
@@ -66,6 +70,9 @@
 #' siteInfo <- GetSiteInfo(server, siteCode="default:Ru5BMMA")
 
 GetSiteInfo <- function(server, siteCode) {
+
+  # declare empty return data frame
+  df <- data.frame()
 
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
@@ -99,13 +106,30 @@ GetSiteInfo <- function(server, siteCode) {
     methodName <- "GetSiteInfoObject"
 
     SOAPAction <- paste(namespace, methodName, sep="")
+    headers <- c("Content-Type" = "text/xml","SOAPAction" = SOAPAction)
     envelope <- MakeSOAPEnvelope(namespace, methodName, c(site=siteCode))
 
     print(paste("downloading SiteInfo from:", url))
 
-    download.time <- system.time(response <- POST(url, body = envelope,
-                      add_headers("Content-Type" = "text/xml","SOAPAction" = SOAPAction))
+    downloaded <- FALSE
+    download.time <- system.time(
+      err <- tryCatch({
+        response <- POST(url, body = envelope, add_headers(headers))
+        status <- http_status(response)$message
+        downloaded <- TRUE
+        },error = function(e) {
+          print(conditionMessage(e))
+        }
+      )
     )
+    if (!downloaded) {
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
+
     status.code <- http_status(response)$category
 
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
@@ -113,16 +137,36 @@ GetSiteInfo <- function(server, siteCode) {
   } else {
     #if the service is REST
     print(paste("downloading SiteInfo from:", server))
-    download.time <- system.time(response <- GET(server,
-                     add_headers("Content-Type" = "text/xml","SOAPAction" = SOAPAction))
+    downloaded <- FALSE
+    download.time <- system.time(
+      err <- tryCatch({
+        response <- GET(server)
+        status <- http_status(response)$message
+        downloaded <- TRUE
+        },error = function(e) {
+          print(conditionMessage(e))
+        }
+      )
     )
+    if (!downloaded) {
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
+
     status.code <- http_status(response)$category
+    version <- "1.1"
+
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
   }
 
   ######################################################
   # Parsing the WaterML XML Data                       #
   ######################################################
+  begin.parse.time <- Sys.time()
+
   doc <- content(response)
 
   # specify the namespace information
@@ -132,7 +176,11 @@ GetSiteInfo <- function(server, siteCode) {
   fault <- xpathSApply(doc, "//soap:Fault", xmlValue, namespaces=ns)
   if (length(fault) > 0) {
     print(paste("SERVER ERROR in GetSiteInfo ", as.character(fault), sep=":"))
-    return(NULL)
+    attr(df, "download.time") <- download.time["elapsed"]
+    attr(df, "download.status") <- as.character(fault)
+    attr(df, "parse.time") <- NA
+    attr(df, "parse.status") <- "SERVER FAULT"
+    return(df)
   }
 
   SiteName = xpathSApply(doc, "//sr:siteName", xmlValue, namespaces=ns)
@@ -186,7 +234,15 @@ GetSiteInfo <- function(server, siteCode) {
   # Check for 'No Series Found' case
   if (N==0) {
     print(paste("NOTE: 0 time series found for site:", siteCode))
-    return(NULL)
+
+    end.parse.time <- Sys.time()
+    parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+
+    attr(df, "download.time") <- download.time["elapsed"]
+    attr(df, "download.status") <- "success"
+    attr(df, "parse.time") <- parse.time
+    attr(df, "parse.status") <- "NO_SERIES_FOUND"
+    return(df)
   }
 
   VariableName <- xpathSApply(doc, "//sr:variableName", xmlValue, namespaces=ns)
@@ -205,7 +261,15 @@ GetSiteInfo <- function(server, siteCode) {
     i <- 1
     if (length(allVariables) < N) {
       print("Bad XML format: not enough details about the variables")
-      return(NULL)
+
+      end.parse.time <- Sys.time()
+      parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- "success"
+      attr(df, "parse.time") <- parse.time
+      attr(df, "parse.status") <- "BAD_XML_FORMAT"
+      return(df)
     }
     #allocate vectors for variables
     ValueType=rep("",N)
@@ -459,8 +523,22 @@ GetSiteInfo <- function(server, siteCode) {
 
   if (nrow(df) == 0) {
     print(paste("NOTE: 0 time series found for site:", siteCode))
-    return(NULL)
+
+    end.parse.time <- Sys.time()
+    parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+
+    attr(df, "download.time") <- download.time["elapsed"]
+    attr(df, "download.status") <- "success"
+    attr(df, "parse.time") <- parse.time
+    attr(df, "parse.status") <- "NO_SERIES_FOUND"
+    return(df)
   }
 
+  end.parse.time <- Sys.time()
+  parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+  attr(df, "download.time") <- download.time["elapsed"]
+  attr(df, "download.status") <- "success"
+  attr(df, "parse.time") <- parse.time
+  attr(df, "parse.status") <- "OK"
   return(df)
 }

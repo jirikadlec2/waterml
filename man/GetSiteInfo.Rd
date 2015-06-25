@@ -66,6 +66,10 @@ endDateTime: \tab POSIXct \tab The local date and time of the last available obs
 beginDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available observation in this time series. \cr
 endDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available observation in this time series. \cr
 }
+The output data.frame also has attributes with information about the status:
+download.time, parse.time, download.status, parse.status
+These attributes can be used for troubleshooting WaterOneFlow/WaterML server errors.
+If parse status is "NO_SERIES_FOUND", then this site doesn't have any available data.
 }
 \description{
 This function gets the table variables measured at a specific site from the WaterML web service
