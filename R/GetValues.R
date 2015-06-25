@@ -72,6 +72,9 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     server <- paste(server, "WSDL", sep="?")
   }
 
+  #save variableCode for possible future use
+  original_variable_code <- variableCode
+
   #check startDate, endDate if it is null
   startDateParam <- ifelse(is.null(startDate), "", strftime(as.POSIXct(startDate), "%Y-%m-%dT%H:%M:%S"))
   endDateParam <- ifelse(is.null(endDate), "", strftime(as.POSIXct(endDate), "%Y-%m-%dT%H:%M:%S"))
@@ -95,19 +98,20 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     methodName <- "GetValuesObject"
 
     #format the variable with the methodID, sourceID, qcID parameters
+    variableCodeParam <- variableCode
     if (!is.null(methodID)) {
-      variableCode <- paste(variableCode, ":methodCode=", methodID, sep="")
+      variableCodeParam <- paste(variableCodeParam, ":methodCode=", methodID, sep="")
     }
     if (!is.null(sourceID)) {
-      variableCode <- paste(variableCode, ":sourceCode=", sourceID, sep="")
+      variableCodeParam <- paste(variableCodeParam, ":sourceCode=", sourceID, sep="")
     }
     if (!is.null(qcID)) {
-      variableCode <- paste(variableCode, ":qualityControlLevelCode=", qcID, sep="")
+      variableCodeParam <- paste(variableCodeParam, ":qualityControlLevelCode=", qcID, sep="")
     }
 
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName, c(location=siteCode,
-                                                          variable=variableCode,
+                                                          variable=variableCodeParam,
                                                           startDate=startDateParam,
                                                           endDate=endDateParam))
     headers <- c("Content-Type" = "text/xml", "SOAPAction" = SOAPAction)
@@ -126,7 +130,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
       )
     )
     if (!downloaded) {
-      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.time") <- as.numeric(download.time["elapsed"])
       attr(df, "download.status") <- err
       attr(df, "parse.time") <- NA
       attr(df, "parse.status") <- NA
@@ -138,7 +142,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     # check for bad status code
     if (status.code != "success") {
       status.message <- http_status(response)$message
-      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.time") <- as.numeric(download.time["elapsed"])
       attr(df, "download.status") <- status.message
       attr(df, "parse.time") <- NA
       attr(df, "parse.status") <- NA
@@ -162,7 +166,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
       )
     )
     if (!downloaded) {
-      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.time") <- as.numeric(download.time["elapsed"])
       attr(df, "download.status") <- err
       attr(df, "parse.time") <- NA
       attr(df, "parse.status") <- NA
@@ -174,19 +178,22 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     # check for bad status code
     if (status.code != "success") {
       status.message <- http_status(response)$message
-      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.time") <- as.numeric(download.time["elapsed"])
       attr(df, "download.status") <- status.message
       attr(df, "parse.time") <- NA
-      attr(df, "parse.status") <- NA
+      attr(df, "parse.status") <- status.message
       return(df)
     }
   }
-  attr(df, "download.time") <- download.time["elapsed"]
-  attr(df, "download.status") <- status.code
+  download.time <- as.numeric(download.time["elapsed"])
+  download.status <- status.code
+  attr(df, "download.time") <- download.time
+  attr(df, "download.status") <- download.status
 
   ######################################################
   # Parsing the WaterML XML Data                       #
   ######################################################
+  begin.parse.time <- Sys.time()
 
   print("reading data values WaterML ...")
   doc <- NULL
@@ -218,12 +225,20 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   fault <- xpathSApply(doc, "//soap:Fault", xmlValue, namespaces=ns)
   if (length(fault) > 0) {
     print(paste("SERVER ERROR in GetValues ", as.character(fault), sep=":"))
+    end.parse.time <- Sys.time()
+    parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+    attr(df, "parse.status") <- as.character(fault)
+    attr(df, "parse.time") <- parse.time
     return(df)
   }
 
   #again check for the status code
   if (status.code == "server error") {
     print(paste("SERVER ERROR in GetValues ", http_status(response)$message))
+    end.parse.time <- Sys.time()
+    parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+    attr(df, "parse.status") <- http_status(response)$message
+    attr(df, "parse.time") <- parse.time
     return(df)
   }
 
@@ -232,13 +247,33 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   val = xpathSApply(doc, "//sr:value", xmlValue, namespaces=ns)
   N <- length(val)
 
-  # if N is 0: the document is probably not valid
+  # if N is 0: the document does not have data values or the xml is probably not valid
   if (N == 0) {
     timeSeriesElement <- unlist(xpathSApply(doc, "//sr:timeSeries", xmlValue, namespaces=ns))
     if (is.null(timeSeriesElement)) {
       print("Error reading WaterML: Bad XML format. <timeSeries> tag not found.")
+      end.parse.time <- Sys.time()
+      parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
       attr(df, "parse.status") <- "Bad XML format. <timeSeries> tag not found."
-      attr(df, "parse.time") <- 0
+      attr(df, "parse.time") <- parse.time
+      return(df)
+    } else {
+      #no data values were found
+      print("NOTE: No data values found in this time series")
+
+      #special case: methodID, sourceID or qcID is specified. Try again with
+      #empty methodID, sourceID, qcID
+      if (!is.null(methodID) | !is.null(sourceID) | !is.null(qcID)) {
+        print("Trying GetValues again without methodID, sourceID, qcID...")
+        daily_param <- daily
+        return(GetValues(server, siteCode, original_variable_code, startDate, endDate,
+                         methodID=NULL, sourceID=NULL, qcID=NULL, daily=daily_param))
+      }
+
+      end.parse.time <- Sys.time()
+      parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+      attr(df, "parse.status") <- "NO_VALUES_FOUND"
+      attr(df, "parse.time") <- parse.time
       return(df)
     }
   }
@@ -336,7 +371,11 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   )
 
   if (nrow(df) == 0) {
-    print(paste("no data values found:", url))
+    print("NOTE: No data values found in this time series")
+    end.parse.time <- Sys.time()
+    parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+    attr(df, "parse.status") <- "NO_VALUES_FOUND"
+    attr(df, "parse.time") <- parse.time
     return(df)
   }
 
@@ -347,6 +386,10 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
   if (!is.null(daily)) {
     validdata <- na.omit(df)
     if (nrow(validdata) == 0) {
+      end.parse.time <- Sys.time()
+      parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+      attr(df, "parse.status") <- "NO_VALUES_FOUND"
+      attr(df, "parse.time") <- parse.time
       print("no valid data found!")
       return(df)
     }
@@ -354,8 +397,21 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     dailyValues <- aggregate(validdata$DataValue, list(validdata$time), daily)
     names(dailyValues)[1] <- "time"
     names(dailyValues)[2] <- "DataValue"
+
+    end.parse.time <- Sys.time()
+    parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+    attr(dailyValues, "download.status") <- attr(df, "download.status")
+    attr(dailyValues, "download.time") <- attr(df, "download.time")
+    attr(dailyValues, "parse.status") <- "OK"
+    attr(dailyValues, "parse.time") <- parse.time
     return(dailyValues)
   }
 
+  end.parse.time <- Sys.time()
+  parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+  attr(df, "download.time") <- download.time
+  attr(df, "download.status") <- download.status
+  attr(df, "parse.status") <- "OK"
+  attr(df, "parse.time") <- parse.time
   return(df)
 }
