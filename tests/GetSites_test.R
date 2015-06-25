@@ -7,7 +7,7 @@ test_result <- data.frame(server=character(0), sites_download_time=numeric(0), s
                           num_sites=numeric(0), random_site_code=character(0),
                           stringsAsFactors=FALSE)
 
-for (i in 2:nrow(services)) {
+for (i in 1:nrow(services)) {
   server <- services$url[i]
   sites <- GetSites(server)
   sites_download_time <- attr(sites, "download.time")
