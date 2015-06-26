@@ -1,58 +1,143 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
+title: "WaterML R Package Tutorial"
+author: "Jiri Kadlec"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{WaterML R Package Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
-
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
-
-## Vignette Info
-
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+```{r, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+library(WaterML)
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+This tutorial introduces the WaterML R package. This tutorial shows an example how to retrieve data from the Hydrologic Information System and do statistical analysis in R.
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+## Data Access Using the WaterML R Package
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+1. Load the required libraries: WaterML for accessing CUAHSI HIS data. The package can
+be found in the R CRAN package repository
 
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+```{r}
+#import required libraries
+library(WaterML)
 ```
 
-Also a quote using `>`:
+2. Find the CUAHSI HIS services from the HIS Central catalogue. The list of available
+services registered in HIS Central is also published here:
+http://hiscentral.cuahsi.org/pub_services.aspx. The GetServices() function returns a
+table with the URL, description, and citation of each service.
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+```{r}
+#get the list of supported CUAHSI HIS services
+services <- GetServices()
+```
+```{r, eval = FALSE}
+View(services)
+```
+
+
+3. Define the CUAHSI HIS service that you are connecting to by giving the URL to that
+service’s WSDL file. This example uses a service from the Ipswich River Watershed
+Association: `http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx?WSDL` that enlists
+volunteers to collect data on the health of the Ipswich River and its tributaries in
+Massachusetts, USA. We can use the `GetVariables()` and `GetSites()` functions to get the
+tables of variables and sites on the server.
+
+```{r, results='hide'}
+#point to an CUAHSI HIS service and get a list of the variables and sites
+server <- "http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx?WSDL"
+variables <- GetVariables(server)
+sites <- GetSites(server)
+```
+
+4. Next we will select one site and find which variables are measured at that site. In this example we choose the site "Fish Brook, Brookview Rd, Boxford" with the full site code "IRWA:FB-BV". Note that you can learn more about the variables at this site viewing the SiteInfo data table in RStudio.
+
+```{r, results='hide'}
+#get full site info for all sites using the GetSiteInfo method
+siteinfo <- GetSiteInfo(server, "IRWA:FB-BV")
+```
+```{r, eval = FALSE}
+View(siteinfo)
+```
+
+5. Now we will get the data values using the GetValues method for two variables at the
+site: water temperature (full variable code `IRWA:Temp`) and dissolved oxygen (full
+variable code `IRWA:DO`). In this example we get the values for all available days. Note
+that we can also use the `startDate` and `endDate` parameters to restrict the time period of interest. To get help on the GetValues function, you can type `?GetValues` in the R console. Note that for this particular site there are 21 Temperature and 22 dissolved oxygen observations.
+
+```{r, results='hide'}
+#get full site info for all sites using the GetSiteInfo method
+Temp <- GetValues(server,siteCode="IRWA:FB-BV",variableCode="IRWA:Temp")
+DO <- GetValues(server, siteCode="IRWA:FB-BV",variableCode="IRWA:DO")
+```
+
+## Data Analysis and Visualization Using R
+
+6. Plot the time series of temperature and dissolved oxygen. We use the plot function for
+the new water temperature plot and we use the `points()` function for adding the dissolved oxygen data points to the existing plot.
+
+```{r}
+plot(DataValue~time, data=Temp, col="red")
+points(DataValue~time, data=DO, col="blue")
+```
+
+7. Create a merged table with columns: Time, DO (Dissolved Oxygen) and Temp (Temperature). We can create this table using the merge function based on the time column. Note that we renamed the automatically assigned column names in the merged table from DataValue.x to "DO" and from DataValue.y to "Temp".
+
+```{r}
+#merge our two tables based on the time column
+data <- merge(DO, Temp, by="time")
+#rename the column DataValue.x in the merged table to "DO"
+names(data)[names(data)=="DataValue.x"] <- "DO"
+#rename the column DataValue.y in the merged table to "Temp"
+names(data)[names(data)=="DataValue.y"] <- "Temp"
+```
+
+8. Now you can plot the data as scatter plot of dissolved oxygen concentration versus
+temperature.
+
+```{r, eval=FALSE}
+plot(DO~Temp, data=data)
+```
+
+9. Finally, we can fit a linear regression model to see is there is a relationship between water temperature and dissolved oxygen concentration at this site.
+
+```{r}
+# Perform a linear regression on the dissolved oxygen vs. temperature values
+model <- lm(DO~Temp, data=data)
+```
+```{r, eval=FALSE}
+summary(model)
+abline(model)
+```
+
+## Results
+
+The code creates two outputs when run in RStudio. First, it creates a scatter plot of dissolved oxygen concentration versus water temperature with the linear regression line.
+
+```{r, echo = FALSE, message = FALSE}
+plot(DO~Temp, data=data)
+model <- lm(DO~Temp, data=data)
+abline(model)
+```
+
+Second, it outputs the results from the regression analysis. From these results, there appears to be a significant negative linear relationship between water temperature and dissolved oxygen at this site.
+
+```{r, echo = FALSE}
+summary(model)
+```
+
+## Summary
+
+This tutorial shows how you can use the WaterML library in R to access data from a CUAHSI HIS web service directly within R without the need to first download data to your local computer. While this was demonstrated for a data service hosted by Ipswich River Watershed Association, the WaterML R package can be used to access data from any compliant CUAHSI HIS web service including the 100+ data services listed on the HIS Central website.
+
+## Additional Notes
+
+For additional information on the tutorial and the WaterML R Package, please refer to:
+
+Jiri Kadlec, Bryn StClair, Daniel P.Ames, Richard A. Gill (2015). WaterML R
+  package for managing ecological experiment data on a CUAHSI HydroServer.
+  Ecological Informatics, 28, 19-28. doi:10.1016/j.ecoinf.2015.05.002
