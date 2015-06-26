@@ -43,4 +43,4 @@ for (i in 1:N) {
   num_values <- nrow(values)
   values_result$num_values[i] <- num_values
 }
-write.csv(siteinfo_result, "tests/getvalues_test.csv")
+write.csv(values_result, "tests/getvalues_test.csv")
