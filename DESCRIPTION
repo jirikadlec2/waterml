@@ -21,9 +21,11 @@ Description: Lets you connect to any CUAHSI WaterOneFlow web service from any hy
     These functions can be used for uploading data to a HydroServer Lite ODM database
     via the JSON data upload web service interface.
 License: MIT + file LICENSE
-Depends:
+Depends: 
     R (>= 3.0)
-Imports:
+Imports: 
     XML, RJSONIO, httr
 LazyData: true
 URL: https://github.com/jirikadlec2/waterml
+Suggests: knitr
+VignetteBuilder: knitr
