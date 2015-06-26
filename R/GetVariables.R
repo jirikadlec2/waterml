@@ -121,6 +121,17 @@ GetVariables <- function(server) {
     status.code <- http_status(response)$category
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
   }
+
+  # check for server error category
+  if (http_status(response)$category == "server error") {
+    attr(df, "download.time") <- download.time["elapsed"]
+    attr(df, "download.status") <- http_status(response)$message
+    attr(df, "parse.time") <- NA
+    attr(df, "parse.status") <- NA
+    return(df)
+  }
+
+
   attr(df, "download.time") <- download.time["elapsed"]
   attr(df, "download.status") <- status.code
 
