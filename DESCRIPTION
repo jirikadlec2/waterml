@@ -27,5 +27,3 @@ Imports:
     XML, RJSONIO, httr
 LazyData: true
 URL: https://github.com/jirikadlec2/waterml
-Suggests: knitr
-VignetteBuilder: knitr

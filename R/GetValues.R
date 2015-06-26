@@ -58,6 +58,9 @@
 GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, endDate=NULL,
                       methodID=NULL, sourceID=NULL, qcID=NULL, daily=NULL) {
 
+  # declare the default download timeout in seconds
+  max_timeout = 360
+
   # declare empty return data frame
   df <- data.frame()
 
@@ -124,7 +127,8 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     downloaded <- FALSE
     download.time <- system.time(
       err <- tryCatch({
-        response <- POST(url, body = envelope, add_headers(headers))
+        response <- POST(url, body = envelope, add_headers(headers),
+                         timeout(max_timeout))
         status <- http_status(response)$message
         downloaded <- TRUE
       },error = function(e) {
@@ -160,7 +164,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     downloaded <- FALSE
     download.time <- system.time(
       err <- tryCatch({
-        response <- GET(server)
+        response <- GET(server, timeout(max_timeout))
         status <- http_status(response)$message
         downloaded <- TRUE
       },error = function(e) {
