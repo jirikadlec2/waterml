@@ -55,7 +55,7 @@
 #' url <- "http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060"
 #' v2 <- GetValues(url)
 
-GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NULL,
+GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, endDate=NULL,
                       methodID=NULL, sourceID=NULL, qcID=NULL, daily=NULL) {
 
   # declare empty return data frame
@@ -74,7 +74,7 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
   #save variableCode for possible future use
   original_variable_code <- NULL
-  if (!is.null(variablecode)) {
+  if (!is.null(variableCode)) {
     original_variable_code <- variableCode
   }
 
@@ -281,12 +281,22 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     }
   }
 
+  #look for zoneOffset
+  time_diff <- NULL
+  zoneOffset <- xpathSApply(doc, "//sr:defaultTimeZone", xmlGetAttr, name="zoneOffset", namespaces=ns)
+  zoneOffset <- unlist(zoneOffset)
+  if (length(zoneOffset) > 0) {
+    offset_split <- strsplit(zoneOffset, ":")
+    diff_text <- offset_split[[1]][1]
+    time_diff <- as.difftime(as.numeric(diff_text), units="hours")
+  }
+
   bigData <- 10000
   if (N > bigData) {
     print(paste("found", N,"data values"))
     print("processing dateTime...")
   }
-  dateTimeRaw = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+  dateTimeRaw <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
   DateTime <- as.POSIXct(strptime(dateTimeRaw, "%Y-%m-%dT%H:%M:%S"))
 
   if (N > bigData) { print("processing censorCode...") }
@@ -309,12 +319,15 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
 
   if (version == "1.1") {
 
-    if (N > bigData) { print("processing dateTimeUTC...") }
-    dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
+    #if defaultTimeZone is not specified, then read it for each value
+    if (is.null(time_diff)) {
+      if (N > bigData) { print("processing dateTimeUTC...") }
+      dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
 
-    if (N > bigData) { print("converting date and time...") }
-    DateTimeUTC <- as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S"))
-    UTCOffset = DateTime - DateTimeUTC
+      if (N > bigData) { print("converting date and time...") }
+      DateTimeUTC <- as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S"))
+      UTCOffset = DateTime - DateTimeUTC
+    }
 
     if (N > bigData) { print("processing methodCode...") }
     methodCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="methodCode", namespaces=ns)
@@ -356,6 +369,12 @@ GetValues <- function(server, siteCode, variableCode, startDate=NULL, endDate=NU
     if (length(qcCode) < N) { qcCode <- NA }
 
     nodata = as.numeric(xpathSApply(doc, "//sr:NoDataValue", xmlValue, namespaces=ns))
+  }
+
+  #process the time zone
+  if (!is.null(time_diff)) {
+    UTCOffset <- rep(as.numeric(time_diff), N)
+    DateTimeUTC <- DateTime - time_diff
   }
 
 
