@@ -20,51 +20,83 @@ Name \tab Type \tab Description \cr
 SiteID \tab character \tab The site ID in the original database\cr
 SiteName \tab character \tab The name of the site \cr
 SiteCode \tab character \tab A short unique code of the site\cr
-FullSiteCode \tab character \tab The complete unique code of the site in the format NETWORK:CODE.\cr
+FullSiteCode \tab character \tab The complete unique code of the site \cr
+              in the format NETWORK:CODE, for example SNOTEL:879.
+              \cr
 Latitude \tab  numeric \tab The WGS84 latitude in decimal degrees \cr
 Longitude \tab numeric \tab The WGS84 longitude in decimal degrees \cr
 Elevation \tab numeric \tab The elevation of the site above sea level in meters \cr
 State \tab character \tab Only for sites in the USA: the state of the site \cr
 County \tab character \tab Only for sites in the USA: The county of the site \cr
-Comments \tab character \tab Additional comments about the sites (note: this field is often empty) \cr
+Comments \tab character \tab Additional comments about the sites \cr
+                         (note: this field is often empty)
+                         \cr
 VariableCode \tab character \tab Short code of the variable \cr
-FullVariableCode \tab character \tab The full variable code, for example: SNOTEL:897. Use this value
-                  as the variableCode parameter in GetValues() function.
+FullVariableCode \tab character \tab The full variable code, for example: SNOTEL:SNWD. \cr
+                  Use this value as the variableCode parameter in GetValues().
                   \cr
 VariableName \tab character \tab The name of the variable \cr
-ValueType \tab character \tab the type of observation: Field Observation or Derived Value \cr
-DataType \tab character \tab the aggregate data type: Average, Continuous, Sporadic.. \cr
-GeneralCategory \tab character \tab the general category of the measurements: Climate, Water Quality.. \cr
-SampleMedium \tab character \tab the sample medium, for example water, atmosphere, soil.. \cr
+ValueType \tab character \tab the type of observation: \cr
+           Field Observation or Derived Value
+           \cr
+DataType \tab character \tab the aggregate data type: \cr
+          Average, Continuous, Sporadic..
+          \cr
+GeneralCategory \tab character \tab the general category of the measurements: \cr
+                 Climate, Water Quality..
+                 \cr
+SampleMedium \tab character \tab the sample medium: \cr
+              for example water, atmosphere, soil..
+              \cr
 UnitName \tab character \tab The name of the measurement units \cr
 UnitType \tab character \tab the type of the measurement units \cr
-UnitAbbreviation \tab character \tab The abbreviation of the measurement units (m, cm, in..) \cr
+UnitAbbreviation \tab character \tab The abbreviation of the measurement units \cr
+                  (m, cm, in..)
+                  \cr
 NoDataValue \tab numeric \tab The value that indicates missing data \cr
 IsRegular \tab boolean \tab TRUE if the measurements are regular, FALSE otherwise \cr
 TimeUnitName \tab character \tab The name of the time units \cr
 TimeUnitAbbreviation \tab character \tab The time units abbreviation \cr
-TimeSupport \tab character \tab The length of the time period over which one measurement is taken \cr
-Speciation \tab character \tab The chemical sample speciation (as nitrogen, as phosphorus..) \cr
+TimeSupport \tab character \tab The length of the time period over which \cr
+             one measurement is taken
+             \cr
+Speciation \tab character \tab The chemical sample speciation \cr
+            (as nitrogen, as phosphorus..)
+            \cr
 methodID \tab character \tab The ID of the sensor or measurement method \cr
-methodCode \tab character \tab The code of the sensor or measurement method. Usually the same as methodID. \cr
-methodDescription \tab character \tab The description of the sensor or measurement method. \cr
-methodLink \tab character \tab The hyperlink of the website of the sensor or measurement method. \cr
+methodCode \tab character \tab The code of the sensor or measurement method. \cr
+            Usually the same as methodID.
+            \cr
+methodDescription \tab character \tab The description of the sensor or \cr
+                   of the data collection instrumentation / measurement method.
+                   \cr
+methodLink \tab character \tab The hyperlink of the website \cr
+            of the sensor or measurement method.
+            \cr
 sourceID \tab character \tab The ID of the data source or author \cr
 organization \tab character \tab The name of the organization collecting the data \cr
 sourceDescription \tab character \tab The description of organization collecting the data \cr
 citation \tab character \tab Instruction how to cite the data \cr
-qualityControlLevelID \tab character \tab The ID of the quality control level. Usually 0 means raw
-                       data and 1 means quality controlled data
+qualityControlLevelID \tab character \tab The ID of the quality control level. \cr
+                       Usually 0 means raw data and 1 means quality controlled data.
                        \cr
 qualityControlLevelCode: \tab character \tab The code of the quality control level.
                           Usually same as qualityControlLevelID.
                           \cr
-qualityControlLevelDefinition: \tab character \tab The definition of the quality control level. \cr
+qualityControlLevelDefinition: \tab character \tab The quality control level definition. \cr
 valueCount: \tab character \tab The number of observations in this time series \cr
-beginDateTime: \tab POSIXct \tab The local date and time of the first available observation in this time series. \cr
-endDateTime: \tab POSIXct \tab The local date and time of the last available observation in this time series. \cr
-beginDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available observation in this time series. \cr
-endDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available observation in this time series. \cr
+beginDateTime: \tab POSIXct \tab The local date and time of the first available \cr
+                             observation in this time series.
+                             \cr
+endDateTime: \tab POSIXct \tab The local date and time of the last available \cr
+                           observation in this time series.
+                           \cr
+beginDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available
+                                observation in this time series.
+                                \cr
+endDateTimeUTC: \tab POSIXct \tab The UTC date and time of the last available
+                              observation in this time series.
+                              \cr
 }
 The output data.frame also has attributes with information about the status:
 download.time, parse.time, download.status, parse.status

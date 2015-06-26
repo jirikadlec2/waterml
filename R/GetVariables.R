@@ -33,6 +33,12 @@
 
 GetVariables <- function(server) {
 
+  # declare the default download timeout in seconds
+  max_timeout = 360
+
+  # declare empty return data frame
+  df <- data.frame()
+
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
 
@@ -62,48 +68,103 @@ GetVariables <- function(server) {
 
     SOAPAction <- paste(namespace, methodName, sep="")
     envelope <- MakeSOAPEnvelope(namespace, methodName, c(variable=""))
-    response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction))
+    headers <- c("Content-Type" = "text/xml", "SOAPAction" = SOAPAction)
+
+    print(paste("GetVariables from", url))
+
+    downloaded <- FALSE
+    download.time <- system.time(
+      err <- tryCatch({
+        response <- POST(url, body = envelope, add_headers(headers),
+                         timeout(max_timeout))
+        status <- http_status(response)$message
+        downloaded <- TRUE
+      },error = function(e) {
+        print(conditionMessage(e))
+      }
+      )
+    )
+    if (!downloaded) {
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
 
     status.code <- http_status(response)$category
-    print(paste("GetVariables from", url, "...", status.code))
+    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
 
-    WaterML <- content(response, as="text")
-    SOAPdoc <- tryCatch({
-      xmlRoot(xmlTreeParse(WaterML, getDTD=FALSE, useInternalNodes = TRUE))
-    }, error = function(err) {
-      print(paste("error fetching variables from URL:", url, err))
-      return(NULL)
-    })
-    #check soap:Header
-    body <- 1
-    if (xmlName(SOAPdoc[[1]]) == "Header") {
-      body <- 2
+  } else {
+    #GetVariables using REST
+    print(paste("downloading variables from:", server, "..."))
+
+    downloaded <- FALSE
+    download.time <- system.time(
+      err <- tryCatch({
+        response <- GET(server)
+        status <- http_status(response)$message
+        downloaded <- TRUE
+      },error=function(e){
+        print(conditionMessage(e))
+      })
+    )
+
+    if (!downloaded) {
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
     }
-    #get the variablesResponse content element
-    doc <- SOAPdoc[[body]][[1]][[1]]
-    doc
-  } else {
-    #if the service is REST
-    doc <- tryCatch({
-      xmlRoot(xmlTreeParse(url, getDTD=FALSE, useInternalNodes = TRUE))
-    }, error = function(err) {
-      print(paste("error fetching variables from URL:", url))
-      return(NULL)
-    })
+
+    status.code <- http_status(response)$category
+    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
   }
-  if (version == "1.1") {
-    vars <- doc[[2]]
-  } else {
-    vars <- doc[[1]]
+  attr(df, "download.time") <- download.time["elapsed"]
+  attr(df, "download.status") <- status.code
+
+  ######################################################
+  # Parsing the WaterML XML Data                       #
+  ######################################################
+
+  begin.parse.time <- Sys.time()
+
+  print("reading variables WaterML data...")
+  doc <- NULL
+  err <- tryCatch({
+    doc <- content(response)
+  }, warning = function(w) {
+    print("Error reading WaterML: Bad XML format.")
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
+  }, error = function(e) {
+    print("Error reading WaterML: Bad XML format.")
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
   }
+  )
+  if (is.null(doc)) {
+    print("Error reading WaterML: Bad XML format.")
+    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.time") <- 0
+    return(df)
+  }
+
+  # specify the namespace information
+  ns <- WaterOneFlowNamespace(version)
+
+  vars <- getNodeSet(doc, "//sr:variable", namespaces=ns)
+
   N <- xmlSize(vars)
   #define the columns
   df <- data.frame(
     VariableCode=rep("",N), FullVariableCode=rep("",N),
     VariableName=rep("",N), ValueType=rep("",N),
     DataType=rep("",N), GeneralCategory=rep("",N),SampleMedium=rep("",N),
-    UnitName=rep("",N), UnitType=rep("",N), UnitAbbreviation=rep("",N),
+    UnitName=rep(NA,N), UnitType=rep(NA,N), UnitAbbreviation=rep(NA,N),
     NoDataValue=rep(NA,N), IsRegular=rep("",N),
     TimeUnitName=rep("",N), TimeUnitAbbreviation=rep("",N),
     TimeSupport=rep("",N), Speciation=rep("",N),
@@ -121,11 +182,12 @@ GetVariables <- function(server) {
     df$GeneralCategory[i] <- v["generalCategory"]
     df$SampleMedium[i] <- v["sampleMedium"]
     if (version == "1.1") {
-      df$UnitName[i] <- v["unit.unitName"]
+      df$UnitName[i] <- ifelse(is.na(v["unit.unitName"]), v["units.unitName"], v["unit.unitName"])
       df$UnitType[i] <- v["unit.unitType"]
       df$UnitAbbreviation[i] <- v["unit.unitAbbreviation"]
       df$IsRegular[i] <- ifelse(is.na(v["timeScale..attrs.isRegular"]), v["timeScale.isRegular"],
                              v["timeScale..attrs.isRegular"])
+
       df$TimeUnitName[i] <- v["timeScale.unit.unitName"]
       df$TimeUnitAbbreviation[i] <- v["timeScale.unit.unitAbbreviation"]
       df$TimeSupport[i] <- v["timeScale.timeSupport"]
@@ -143,5 +205,12 @@ GetVariables <- function(server) {
     }
     df$Speciation[i] <- v["speciation"]
   }
+
+  end.parse.time <- Sys.time()
+  parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+  attr(df, "download.time") <- download.time["elapsed"]
+  attr(df, "download.status") <- "success"
+  attr(df, "parse.time") <- parse.time
+  attr(df, "parse.status") <- "OK"
   return(df)
 }

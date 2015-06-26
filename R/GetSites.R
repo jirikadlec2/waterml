@@ -43,6 +43,9 @@
 
 GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
 
+  # declare the default download timeout in seconds
+  max_timeout = 360
+
   # declare empty return data frame
   df <- data.frame()
 
@@ -118,12 +121,30 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
       }
     }
     SOAPAction <- paste(namespace, methodName, sep="")
-
+    headers <- c("Content-Type" = "text/xml", "SOAPAction" = SOAPAction)
 
     print(paste("downloading sites from:", url, "..."))
 
-    download.time <- system.time(response <- POST(url, body = envelope,
-                     add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction)))
+    downloaded <- FALSE
+    download.time <- system.time(
+      err <- tryCatch({
+        response <- POST(url, body = envelope, add_headers(headers),
+                         timeout(max_timeout))
+        status <- http_status(response)$message
+        downloaded <- TRUE
+      },error = function(e) {
+        print(conditionMessage(e))
+      }
+      )
+    )
+    if (!downloaded) {
+      attr(df, "download.time") <- download.time["elapsed"]
+      attr(df, "download.status") <- err
+      attr(df, "parse.time") <- NA
+      attr(df, "parse.status") <- NA
+      return(df)
+    }
+
     status.code <- http_status(response)$category
 
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
