@@ -140,4 +140,5 @@ For additional information on the tutorial and the WaterML R Package, please ref
 
 Jiri Kadlec, Bryn StClair, Daniel P.Ames, Richard A. Gill (2015). WaterML R
   package for managing ecological experiment data on a CUAHSI HydroServer.
-  Ecological Informatics, 28, 19-28. doi:10.1016/j.ecoinf.2015.05.002
+  Ecological Informatics, 28, 19-28.
+  http://www.sciencedirect.com/science/article/pii/S1574954115000801
