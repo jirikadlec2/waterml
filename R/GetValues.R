@@ -2,10 +2,12 @@
 #'
 #' This function gets the time series data values from the WaterML web service
 #'
+#' @import stats
 #' @import XML
 #' @import httr
-#' @param server The URL of the web service ending with .asmx,
-#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL
+#' @param server The URL of the web service,
+#'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL.
+#'  This can be also a custom REST URL or the file name of the WaterML file.
 #' @param siteCode The site code. To get a list of available site codes, see GetSites() function
 #'  and use the FullSiteCode field.
 #' @param variableCode The variable code. To get a list of possible variable codes, see GetVariables()

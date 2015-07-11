@@ -9,8 +9,9 @@ GetValues(server, siteCode = NULL, variableCode = NULL, startDate = NULL,
   daily = NULL)
 }
 \arguments{
-\item{server}{The URL of the web service ending with .asmx,
-for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL}
+\item{server}{The URL of the web service,
+for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL.
+This can be also a custom REST URL or the file name of the WaterML file.}
 
 \item{siteCode}{The site code. To get a list of available site codes, see GetSites() function
 and use the FullSiteCode field.}
