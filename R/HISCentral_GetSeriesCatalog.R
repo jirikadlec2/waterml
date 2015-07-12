@@ -138,6 +138,7 @@ HISCentral_GetSeriesCatalog <- function(west, south, east, north,
     FullVariableCode=FullVariableCode,
     BeginDateTime=as.POSIXct(strptime(BeginDateTime, format="%m/%d/%Y")),
     EndDateTime=as.POSIXct(strptime(EndDateTime, format="%m/%d/%Y")),
+    SiteName=SiteName,
     Latitude=as.numeric(Latitude),
     Longitude=as.numeric(Longitude),
     DataType=DataType,
@@ -145,7 +146,7 @@ HISCentral_GetSeriesCatalog <- function(west, south, east, north,
     SampleMedium=SampleMedium,
     TimeUnits=TimeUnits,
     TimeSupport=as.numeric(TimeSupport),
-    StringsAsFactors=FALSE
+    stringsAsFactors=FALSE
   )
 
   return(df)

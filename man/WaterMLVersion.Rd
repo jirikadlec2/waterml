@@ -19,6 +19,8 @@ Otherwise it tries to detect "http://www.cuahsi.org/waterML/1.1/" (for WaterML 1
 "http://www.cuahsi.org/WaterML/1.0/" (for WaterML 1.0)
 }
 \examples{
+library(httr)
+library(XML)
 url <- "http://www.waterml2.org/KiWIS-WML2-Example.wml"
 response <- GET(url)
 doc <- content(response, type = "application/xml")

@@ -5,6 +5,7 @@
 #' @import stats
 #' @import XML
 #' @import httr
+#' @import plyr
 #' @param server The URL of the web service,
 #'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL.
 #'  This can be also a custom REST URL or the file name of the WaterML file.
@@ -56,6 +57,9 @@
 #' #example 2: Get values from an external REST URL (in this case the Provo USGS NWIS site id 10163000)
 #' url <- "http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060"
 #' v2 <- GetValues(url)
+#' #example 3: Get values from WaterML 2.0 file
+#' url2 <- "http://www.waterml2.org/KiWIS-WML2-Example.wml"
+#' waterml2_data <- GetValues(url2)
 
 GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, endDate=NULL,
                       methodID=NULL, sourceID=NULL, qcID=NULL, daily=NULL) {
@@ -207,7 +211,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
   print("reading data values WaterML ...")
   doc <- NULL
   err <- tryCatch({
-    doc <- content(response)
+    doc <- content(response, type = "application/xml")
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
     attr(df, "parse.status") <- "Bad XML format"
@@ -225,6 +229,89 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     attr(df, "parse.status") <- "Bad XML format"
     attr(df, "parse.time") <- 0
     return(df)
+  }
+
+  # Check for WaterML version 2.0 (special code - adopted from dataRetrieval package..)
+  waterml_version <- WaterMLVersion(doc)
+  if (waterml_version == "2.0") {
+
+    ns <- xmlNamespaceDefinitions(doc, simplify = TRUE)
+    timeSeries <- xpathApply(doc, "//wml2:Collection", namespaces = ns)
+
+    if(0 == length(timeSeries)){
+      df <- data.frame()
+      attr(df, "url") <- obs_url
+      return(df)
+    }
+
+    for (i in 1:length(timeSeries)){
+
+      chunk <- xmlDoc(timeSeries[[i]])
+      chunk <- xmlRoot(chunk)
+      chunkNS <- xmlNamespaceDefinitions(chunk, simplify = TRUE)
+
+      xp <- xpathApply(chunk, "//wml2:MeasurementTimeseries/wml2:point/wml2:MeasurementTVP",
+                       xpathSApply, ".//*[not(*)]",
+                       function(x) setNames(ifelse(nzchar(xmlValue(x)),
+                                                   xmlValue(x),
+                                                   ifelse("qualifier" == xmlName(x),
+                                                          xpathSApply(x,"./@xlink:title",namespaces = ns),"")), #originally I had the "" as xmlAttr(x)
+                                            xmlName(x,full=TRUE)),
+                       namespaces = chunkNS)
+
+      if(length(xpathApply(doc,
+                           "//wml2:MeasurementTimeseries/wml2:point/wml2:MeasurementTVP/wml2:metadata/wml2:TVPMeasurementMetadata",
+                           xmlValue, namespaces = ns)) != 0){
+        xp <- xp[-1]
+      }
+
+      DF2 <- do.call(rbind.fill.matrix, lapply(xp, t))
+      DF2 <- as.data.frame(DF2,stringsAsFactors=FALSE)
+
+      names(DF2)[grep("wml2",names(DF2))] <- sub("wml2:","",names(DF2)[grep("wml2",names(DF2))])
+
+      DF2$time <- substr(gsub(":","",DF2$time),1, 17)
+      DF2$time <- ifelse(nchar(DF2$time) > 18,
+                         as.POSIXct(DF2$time, format="%Y-%m-%dT%H%M%S%z",tz="UTC"),
+                         as.POSIXct(DF2$time, format="%Y-%m-%dT%H%M%S",tz="UTC"))
+
+      DF2$time <- as.POSIXct(DF2$time, origin = "1970-01-01", tz="UTC")
+      DF2$value <- as.numeric(DF2$value)
+
+      #########################################
+      # Very specific to USGS:
+      defaultQualifier <- as.character(xpathApply(chunk, "//wml2:defaultPointMetadata/wml2:DefaultTVPMeasurementMetadata/wml2:qualifier/@xlink:title",namespaces = chunkNS))
+
+      if (length(defaultQualifier) == 0 && (typeof(defaultQualifier) == "character")) {
+        defaultQualifier <- "NA"
+      }
+
+      if("swe:value" %in% names(DF2)){
+        isQual <- as.character(xpathApply(chunk,
+                                          "//wml2:MeasurementTimeseries/wml2:point/wml2:MeasurementTVP/wml2:metadata/wml2:TVPMeasurementMetadata/wml2:qualifier/@xlink:title",
+                                          namespaces = chunkNS))
+        DF2$qualifier <- ifelse(defaultQualifier != isQual,isQual,defaultQualifier)
+        DF2$`swe:value` <- NULL
+      } else {
+        DF2$qualifier <- rep(defaultQualifier,nrow(DF2))
+      }
+
+      names(DF2) <- c("time", "DataValue", "Qualifier")
+      DF2$UTCOffset <- 0
+      DF2$CensorCode <- "nc"
+      DF2$DateTimeUTC <- DF2$LocalDateTime
+      DF2$MethodCode <- NA
+      DF2$SourceCode <- NA
+      DF2$QualityControlLevelCode <- NA
+
+      end.parse.time <- Sys.time()
+      parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+      attr(DF2, "download.time") <- download.time
+      attr(DF2, "download.status") <- download.status
+      attr(DF2, "parse.status") <- "OK"
+      attr(DF2, "parse.time") <- parse.time
+    }
+    return (DF2)
   }
 
   # specify the namespace information

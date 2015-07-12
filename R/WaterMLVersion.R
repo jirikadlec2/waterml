@@ -10,6 +10,8 @@
 #' @keywords WaterML
 #' @export
 #' @examples
+#' library(httr)
+#' library(XML)
 #' url <- "http://www.waterml2.org/KiWIS-WML2-Example.wml"
 #' response <- GET(url)
 #' doc <- content(response, type = "application/xml")
