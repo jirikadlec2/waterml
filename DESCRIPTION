@@ -1,7 +1,7 @@
 Package: WaterML
 Type: Package
 Title: Fetch and Analyze Data from WaterML or CUAHSI WaterOneFlow Web Service
-Version: 1.3.1
+Version: 1.3.2
 Authors@R: person("Jiri","Kadlec", email="jirikadlec2@gmail.com", role=c("aut", "cre"))
 Description: Lets you connect to any CUAHSI WaterOneFlow web service from any hydroserver.
     To see list of available hydroservers, see http://hiscentral.cuahsi.org.
@@ -16,7 +16,8 @@ Description: Lets you connect to any CUAHSI WaterOneFlow web service from any hy
     and endtime, fetch a data.frame of all the observation time series data values.
     The data.frame has two columns: time and DataValue. This function has an optional "daily"
     parameter, you can set daily="max", daily="min" or daily="mean" to get aggregated daily
-    values. The package also has five data upload functions:
+    values. The GetValues function can also retrieve WaterML 1 or WaterML 2.0 data
+    from a custom URL. The package also has five data upload functions:
     AddSites(), AddVariables(), AddMethods(), AddSources(), and AddValues().
     These functions can be used for uploading data to a HydroServer Lite ODM database
     via the JSON data upload web service interface.

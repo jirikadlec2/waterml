@@ -240,7 +240,11 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
 
     if(0 == length(timeSeries)){
       df <- data.frame()
-      attr(df, "url") <- obs_url
+      print("NOTE: No data values found in this time series")
+      end.parse.time <- Sys.time()
+      parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
+      attr(df, "parse.status") <- "NO_VALUES_FOUND"
+      attr(df, "parse.time") <- parse.time
       return(df)
     }
 
