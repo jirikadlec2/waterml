@@ -5,7 +5,6 @@
 #' @import stats
 #' @import XML
 #' @import httr
-#' @import plyr
 #' @param server The URL of the web service,
 #'  for example: http://worldwater.byu.edu/interactive/rushvalley/services/index.php/cuahsi_1_1.asmx?WSDL.
 #'  This can be also a custom REST URL or the file name of the WaterML file.
@@ -64,6 +63,9 @@
 GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, endDate=NULL,
                       methodID=NULL, sourceID=NULL, qcID=NULL, daily=NULL) {
 
+  #file or url?
+  isFile <- FALSE
+
   # declare the default download timeout in seconds
   max_timeout = 360
 
@@ -72,6 +74,8 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
 
   # trim any leading and trailing whitespaces in server
   server <- gsub("^\\s+|\\s+$", "", server)
+
+  #if server is a file name
 
   SOAP <- TRUE
 
@@ -165,43 +169,52 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     #REST
     version <- "1.1"
 
-    print(paste("downloading values from:", server, "..."))
+    if (substr(server, 1, 4) == "http")
+    {
+      print(paste("downloading values from:", server, "..."))
 
-    downloaded <- FALSE
-    download.time <- system.time(
-      err <- tryCatch({
-        response <- GET(server, timeout(max_timeout))
-        status <- http_status(response)$message
-        downloaded <- TRUE
-      },error = function(e) {
-        print(conditionMessage(e))
-      }
+      downloaded <- FALSE
+      download.time <- system.time(
+        err <- tryCatch({
+          response <- GET(server, timeout(max_timeout))
+          status <- http_status(response)$message
+          downloaded <- TRUE
+        },error = function(e) {
+          print(conditionMessage(e))
+        }
+        )
       )
-    )
-    if (!downloaded) {
-      attr(df, "download.time") <- as.numeric(download.time["elapsed"])
-      attr(df, "download.status") <- err
-      attr(df, "parse.time") <- NA
-      attr(df, "parse.status") <- NA
-      return(df)
-    }
+      if (!downloaded) {
+        attr(df, "download.time") <- as.numeric(download.time["elapsed"])
+        attr(df, "download.status") <- err
+        attr(df, "parse.time") <- NA
+        attr(df, "parse.status") <- NA
+        return(df)
+      }
 
-    status.code <- http_status(response)$category
-    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
-    # check for bad status code
-    if (status.code != "success") {
-      status.message <- http_status(response)$message
-      attr(df, "download.time") <- as.numeric(download.time["elapsed"])
-      attr(df, "download.status") <- status.message
-      attr(df, "parse.time") <- NA
-      attr(df, "parse.status") <- status.message
-      return(df)
+      status.code <- http_status(response)$category
+      print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
+      # check for bad status code
+      if (status.code != "success") {
+        status.message <- http_status(response)$message
+        attr(df, "download.time") <- as.numeric(download.time["elapsed"])
+        attr(df, "download.status") <- status.message
+        attr(df, "parse.time") <- NA
+        attr(df, "parse.status") <- status.message
+        return(df)
+      }
+    } else {
+      #we are using a local file..
+      isFile <- TRUE
     }
   }
-  download.time <- as.numeric(download.time["elapsed"])
-  download.status <- status.code
-  attr(df, "download.time") <- download.time
-  attr(df, "download.status") <- download.status
+
+  if (!isFile) {
+    download.time <- as.numeric(download.time["elapsed"])
+    download.status <- status.code
+    attr(df, "download.time") <- download.time
+    attr(df, "download.status") <- download.status
+  }
 
   ######################################################
   # Parsing the WaterML XML Data                       #
@@ -211,7 +224,11 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
   print("reading data values WaterML ...")
   doc <- NULL
   err <- tryCatch({
-    doc <- content(response, type = "application/xml")
+    if (isFile) {
+      doc <- xmlParseDoc(server)
+    } else {
+      doc <- content(response, type = "application/xml")
+    }
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
     attr(df, "parse.status") <- "Bad XML format"
@@ -269,10 +286,11 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
         xp <- xp[-1]
       }
 
-      DF2 <- do.call(rbind.fill.matrix, lapply(xp, t))
-      DF2 <- as.data.frame(DF2,stringsAsFactors=FALSE)
+      xp2 <- unlist(xp)
+      xpTimes <- xp2[seq(1, length(xp2), 2)]
+      xpVals <- xp2[seq(2, length(xp2), 2)]
 
-      names(DF2)[grep("wml2",names(DF2))] <- sub("wml2:","",names(DF2)[grep("wml2",names(DF2))])
+      DF2 <- data.frame(time=xpTimes, value=xpVals, stringsAsFactors = FALSE)
 
       DF2$time <- substr(gsub(":","",DF2$time),1, 17)
       DF2$time <- ifelse(nchar(DF2$time) > 18,
