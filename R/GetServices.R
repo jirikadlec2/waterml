@@ -3,14 +3,49 @@
 #' This function gets the table of web services from the HIS Central catalog
 #'
 #' @import XML
+#' @import httr
 #' @keywords waterml
 #' @export
 #' @examples
 #' GetServices()
 
 GetServices <- function() {
-  catalog = "http://hiscentral.cuahsi.org/webservices/hiscentral.asmx/GetWaterOneFlowServiceInfo"
-  doc <- xmlRoot(xmlTreeParse(catalog, getDTD=FALSE, useInternalNodes = TRUE))
+  url <- "http://hiscentral.cuahsi.org/webservices/hiscentral.asmx/GetWaterOneFlowServiceInfo"
+
+  download.time <- system.time(
+    tryCatch({
+      downloaded <- FALSE
+      response <- GET(url)
+      downloaded <- TRUE
+    },error=function(e){
+      print(conditionMessage(e))
+    })
+  )
+
+  if (!downloaded) {
+    return(NULL)
+  }
+  status.code <- http_status(response)$category
+
+  ######################################################
+  # Parsing the WaterML XML Data                       #
+  ######################################################
+  doc <- tryCatch({
+    content(response)
+  }, warning = function(w) {
+    print("Error reading HIS Central Data: Bad XML format.")
+    return(NULL)
+  }, error = function(e) {
+    print("Error reading HIS Central Data: Bad XML format.")
+    return(NULL)
+  }
+  )
+  if (is.null(doc)) {
+    return(NULL)
+  }
+
+  doc <- xmlRoot(doc, getDTD=FALSE, useInternalNodes = TRUE)
+
   N <- xmlSize(doc)
 
   colnames <- c("url","title","descriptionURL","organization","citation","abstract",
