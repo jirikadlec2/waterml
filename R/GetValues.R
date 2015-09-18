@@ -456,7 +456,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
 
     if (N > bigData) { print("processing qualityControlLevelCode...") }
     qcCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="qualityControlLevelCode", namespaces=ns)
-    qcCode <- unlist(sourceCode)
+    qcCode <- unlist(qcCode)
     if (is.null(qcCode)) { qcCode <- NA }
 
     nodata = as.numeric(xpathSApply(doc, "//sr:noDataValue", xmlValue, namespaces=ns))
