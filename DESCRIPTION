@@ -33,6 +33,7 @@ Imports:
 LazyData: true
 URL: https://github.com/jirikadlec2/waterml
 Suggests:
-    knitr
+    knitr,
+    RMarkDown
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
