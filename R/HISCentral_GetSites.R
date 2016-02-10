@@ -84,7 +84,7 @@ HISCentral_GetSites <- function(west=-180, south=-90, east=180, north=90,
 
   print("reading sites XML data...")
   doc <- tryCatch({
-    content(response)
+    xmlParse(response)
   }, warning = function(w) {
     print("Error reading HIS Central Data: Bad XML format.")
     return(NULL)

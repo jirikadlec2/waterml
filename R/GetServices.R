@@ -31,7 +31,7 @@ GetServices <- function() {
   # Parsing the WaterML XML Data                       #
   ######################################################
   doc <- tryCatch({
-    content(response)
+    xmlParse(response)
   }, warning = function(w) {
     print("Error reading HIS Central Data: Bad XML format.")
     return(NULL)

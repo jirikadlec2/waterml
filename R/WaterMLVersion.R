@@ -14,7 +14,7 @@
 #' library(XML)
 #' url <- "http://www.waterml2.org/KiWIS-WML2-Example.wml"
 #' response <- GET(url)
-#' doc <- content(response, type = "application/xml")
+#' doc <- xmlParse(response)
 #' version <- WaterMLVersion(doc)
 
 WaterMLVersion <- function(doc) {

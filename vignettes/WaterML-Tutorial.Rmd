@@ -85,6 +85,19 @@ plot(DataValue~time, data=Temp, col="red")
 points(DataValue~time, data=DO, col="blue")
 ```
 
+Note that the "time" represents the local time, and "DateTimeUTC" represents the UTC time. The "DateTimeUTC" columns are in POSIXct format. POSIXct is a 
+special format in R for storing date and time. POSIXct represents the number of seconds since the beginning of 1970. You can use the strftime function to get the year,
+month, day, hour, minute and second corresponding to each time as shown below:
+
+```{r}
+years <- strftime(DO$time, "%Y")
+months <- strftime(DO$time, "%m")
+days <- strftime(DO$time, "%d")
+hours <- strftime(DO$time, "%h")
+minutes <- strftime(DO$time, "%M")
+seconds <- strftime(DO$time, "%s")
+```
+
 7. Create a merged table with columns: Time, DO (Dissolved Oxygen) and Temp (Temperature). We can create this table using the merge function based on the time column. Note that we renamed the automatically assigned column names in the merged table from DataValue.x to "DO" and from DataValue.y to "Temp".
 
 ```{r}

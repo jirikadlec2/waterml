@@ -197,7 +197,7 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
   print("reading sites WaterML data...")
   doc <- NULL
   err <- tryCatch({
-    doc <- content(response)
+    doc <- xmlParse(response)
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
     attr(df, "parse.status") <- "Bad XML format"

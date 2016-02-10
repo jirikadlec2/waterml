@@ -11,7 +11,7 @@ citEntry(entry = "Article",
   volume       = "28",
   pages        = "19--28",
   url          = "http://www.sciencedirect.com/science/article/pii/S1574954115000801",
-  doi          = "doi:10.1016/j.ecoinf.2015.05.002",
+  doi          = "10.1016/j.ecoinf.2015.05.002",
   textVersion  =
   paste("Jiri Kadlec, Bryn StClair, Daniel P.Ames, Richard A. Gill (2015).",
         "WaterML R package for managing ecological experiment data on a CUAHSI HydroServer.",

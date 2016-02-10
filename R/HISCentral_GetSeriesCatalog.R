@@ -97,7 +97,7 @@ HISCentral_GetSeriesCatalog <- function(west, south, east, north,
 
   print("reading sites XML data...")
   doc <- tryCatch({
-    content(response)
+    xmlParse(response)
   }, warning = function(w) {
     print("Error reading HIS Central Data: Bad XML format.")
     return(NULL)

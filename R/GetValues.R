@@ -28,13 +28,15 @@
 #' data values are aggreagted to daily time step.
 #' @return a data.frame of data values with the following columns:
 #' \itemize{
-#' \item time: The local date/time of the observation. The data type is POSIXct.
+#' \item time: The local date/time of the observation. The data type is POSIXct. POSIXct is
+#'             a data type in R for storing time.
 #' \item DataValue: The observed data value
 #' \item UTCOffset: The difference between local time and UTC time in hours
 #' \item CensorCode: The code for censored observations. Possible values are nc (not censored),
 #'             gt (greater than), lt (less than),
 #'             nd (non-detect), pnq (present but not quantified)
 #' \item DateTimeUTC: The UTC time of the observation. The data type is POSIXct.
+#'             POSIXct is a special data type in R for storing time.
 #' \item MethodCode: The code of the method or instrument used for the observation
 #' \item SourceCode: The code of the data source
 #' \item QualityControlLevelCode: The code of the quality control level. Possible values are
@@ -56,9 +58,12 @@
 #' #example 2: Get values from an external REST URL (in this case the Provo USGS NWIS site id 10163000)
 #' url <- "http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060"
 #' v2 <- GetValues(url)
-#' #example 3: Get values from WaterML 2.0 file
+#' #example 3: Get values from WaterML 2.0 file and show year, month, day
 #' url2 <- "http://www.waterml2.org/KiWIS-WML2-Example.wml"
 #' waterml2_data <- GetValues(url2)
+#' waterml2_data$year <- strftime(waterml2_data$time, "%Y")
+#' waterml2_data$month <- strftime(waterml2_data$time, "%M")
+#' waterml2_data$day <- strftime(waterml2_data$time, "%d")
 
 GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, endDate=NULL,
                       methodID=NULL, sourceID=NULL, qcID=NULL, daily=NULL) {
@@ -157,7 +162,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     status.code <- http_status(response)$category
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
     # check for bad status code
-    if (status.code != "success") {
+    if (tolower(status.code) != "success") {
       status.message <- http_status(response)$message
       attr(df, "download.time") <- as.numeric(download.time["elapsed"])
       attr(df, "download.status") <- status.message
@@ -195,7 +200,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
       status.code <- http_status(response)$category
       print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
       # check for bad status code
-      if (status.code != "success") {
+      if (tolower(status.code) != "success") {
         status.message <- http_status(response)$message
         attr(df, "download.time") <- as.numeric(download.time["elapsed"])
         attr(df, "download.status") <- status.message
@@ -227,7 +232,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     if (isFile) {
       doc <- xmlParseDoc(server)
     } else {
-      doc <- content(response, type = "application/xml")
+      doc <- xmlParse(response)
     }
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
@@ -239,8 +244,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     attr(df, "parse.status") <- "Bad XML format"
     attr(df, "parse.time") <- 0
     return(df)
-  }
-  )
+  })
   if (is.null(doc)) {
     print("Error reading WaterML: Bad XML format.")
     attr(df, "parse.status") <- "Bad XML format"
@@ -351,7 +355,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
   }
 
   #again check for the status code
-  if (status.code == "server error") {
+  if (tolower(status.code) == "server error") {
     print(paste("SERVER ERROR in GetValues ", http_status(response)$message))
     end.parse.time <- Sys.time()
     parse.time <- as.numeric(difftime(end.parse.time, begin.parse.time, units="sec"))
@@ -400,19 +404,23 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
   time_diff <- NULL
   zoneOffset <- xpathSApply(doc, "//sr:defaultTimeZone", xmlGetAttr, name="zoneOffset", namespaces=ns)
   zoneOffset <- unlist(zoneOffset)
+  zoneName <- "GMT"
   if (length(zoneOffset) > 0) {
     offset_split <- strsplit(zoneOffset, ":")
     diff_text <- offset_split[[1]][1]
     time_diff <- as.difftime(as.numeric(diff_text), units="hours")
+    zoneName <- paste("Etc/GMT+", as.numeric(diff_text), sep="")
   }
 
   bigData <- 10000
   if (N > bigData) {
     print(paste("found", N,"data values"))
-    print("processing dateTime...")
   }
-  dateTimeRaw <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
-  DateTime <- as.POSIXct(strptime(dateTimeRaw, "%Y-%m-%dT%H:%M:%S"))
+  #if (N > bigData) { print("processing dateTime...")}
+  #dateTimeRaw <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+
+  #DateTime <- as.POSIXct(strptime(dateTimeRaw, "%Y-%m-%dT%H:%M:%S"))
+  #DateTime <- as.POSIXct(dateTimeRaw, format="%Y-%m-%dT%H:%M:%S", tz=)
 
   if (N > bigData) { print("processing censorCode...") }
   censorCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="censorCode", namespaces=ns)
@@ -435,13 +443,23 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
   if (version == "1.1") {
 
     #if defaultTimeZone is not specified, then read it for each value
-    if (is.null(time_diff)) {
-      if (N > bigData) { print("processing dateTimeUTC...") }
-      dateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
+    if (N > bigData) { print("processing dateTimeUTC...") }
 
-      if (N > bigData) { print("converting date and time...") }
-      DateTimeUTC <- as.POSIXct(strptime(dateTimeUTC, "%Y-%m-%dT%H:%M:%S"))
-      UTCOffset = DateTime - DateTimeUTC
+    if (is.null(time_diff)) {
+      DateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
+      DateTimeUTC <- as.POSIXct(DateTimeUTC, format="%Y-%m-%dT%H:%M:%S", tz="GMT")
+      UTCOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
+      UTCOffset <- as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3))
+      utcDiff = as.difftime(UTCOffset, units="hours")
+      DateTime = as.POSIXct(DateTimeUTC + utcDiff)
+      attr(DateTime, "tzone") <- paste("Etc/GMT+", UTCOffset[1], sep="")
+    } else {
+      DateTime <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+      zone <- paste("Etc/GMT+", as.numeric(diff_text), sep="")
+      DateTime <- as.POSIXct(DateTime, format="%Y-%m-%dT%H:%M:%S", tz=zone)
+      UTCOffset = rep(as.numeric(diff_text), N)
+      DateTimeUTC = DateTime - time_diff
+      attr(DateTimeUTC, "tzone") <- "GMT"
     }
 
     if (N > bigData) { print("processing methodCode...") }
@@ -464,7 +482,9 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
   } else {
 
     #WaterML 1.0 usually doesn't provide information on UTC offset
-    DateTimeUTC <- DateTime
+    if (N > bigData) { print("processing dateTime...") }
+    DateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+    DateTime <- DateTimeUTC
     UTCOffset <- rep(0, N)
 
     if (N > bigData) { print ("processing methodID...")}
@@ -485,13 +505,6 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
 
     nodata = as.numeric(xpathSApply(doc, "//sr:NoDataValue", xmlValue, namespaces=ns))
   }
-
-  #process the time zone
-  if (!is.null(time_diff)) {
-    UTCOffset <- rep(as.numeric(time_diff), N)
-    DateTimeUTC <- DateTime - time_diff
-  }
-
 
   #make the data frame
   df <- data.frame(

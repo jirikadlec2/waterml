@@ -89,7 +89,7 @@ AddMethods <- function(server, username, password, methods) {
                      add_headers("Content-Type" = "application/json")
     )
     status.code <- http_status(response)$category
-    if (status.code == "success") {
+    if (tolower(status.code) == "success") {
       response_status = content(response, type="application/json")
       print(response_status)
       if (response_status$status == "200 OK") {
@@ -108,7 +108,7 @@ AddMethods <- function(server, username, password, methods) {
       #http status code is other than success...
     } else {
       if (status.code == "server error") {
-        print(content(response))
+        print(response)
       }
       new.method <-
         c(NA,

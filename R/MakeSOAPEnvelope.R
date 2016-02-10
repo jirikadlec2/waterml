@@ -22,6 +22,7 @@
 #' @export
 #' @examples
 #' library(httr)
+#' library(XML)
 #' myEnvelope <- MakeSOAPEnvelope("http://www.cuahsi.org/his/1.1/ws/", "GetSitesObject")
 #' SOAPAction <- "http://www.cuahsi.org/his/1.1/ws/GetSitesObject"
 #' url <- "http://hydrodata.info/chmi-d/cuahsi_1_1.asmx"
@@ -29,7 +30,7 @@
 #'                  add_headers("Content-Type" = "text/xml", "SOAPAction" = SOAPAction),
 #'                  verbose())
 #' status.code <- http_status(response)$category
-#' WaterML <- content(response)
+#' WaterML <- xmlParse(response)
 #' WaterML
 
 MakeSOAPEnvelope <- function(CUAHSINamespace, MethodName, parameters=NULL) {

@@ -102,12 +102,13 @@ AddValues <- function(server, username, password, site, variable, methodID, sour
                    add_headers("Content-Type" = "application/json")
   )
   status.code <- http_status(response)$category
-  if (status.code == "success") {
+  if (tolower(status.code) == "success") {
     status = content(response, type="application/json")
     print(status)
     return(paste(status$status, status$message))
   } else {
-      status = content(response)
+      print(response)
+      status = print(response)
   }
   return (status)
 }

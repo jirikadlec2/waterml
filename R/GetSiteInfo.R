@@ -205,7 +205,7 @@ GetSiteInfo <- function(server, siteCode) {
   ######################################################
   begin.parse.time <- Sys.time()
 
-  doc <- content(response)
+  doc <- xmlParse(response)
 
   # specify the namespace information
   ns <- WaterOneFlowNamespace(version)

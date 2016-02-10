@@ -97,7 +97,7 @@ AddSites <- function(server, username, password, sites) {
                      add_headers("Content-Type" = "application/json")
     )
     status.code <- http_status(response)$category
-    if (status.code == "success") {
+    if (tolower(status.code) == "success") {
       response_status = content(response, type="application/json")
       print(response_status)
       if (response_status$status == "200 OK") {
@@ -108,6 +108,7 @@ AddSites <- function(server, username, password, sites) {
         added.sites[nrow(added.sites)+1,] <- new.site
       } else {
         print("ERROR!")
+        print(response)
       }
       #http status code is other than success...
     } else {

@@ -144,7 +144,7 @@ GetVariables <- function(server) {
   print("reading variables WaterML data...")
   doc <- NULL
   err <- tryCatch({
-    doc <- content(response)
+    doc <- xmlParse(response)
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
     attr(df, "parse.status") <- "Bad XML format"
