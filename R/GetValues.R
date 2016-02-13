@@ -232,7 +232,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     if (isFile) {
       doc <- xmlParseDoc(server)
     } else {
-      doc <- xmlParse(response)
+      doc <- xmlParse(content(response, type="text", encoding="utf-8"))
     }
   }, warning = function(w) {
     print("Error reading WaterML: Bad XML format.")
@@ -409,18 +409,17 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     offset_split <- strsplit(zoneOffset, ":")
     diff_text <- offset_split[[1]][1]
     time_diff <- as.difftime(as.numeric(diff_text), units="hours")
-    zoneName <- paste("Etc/GMT+", as.numeric(diff_text), sep="")
+    if (as.numeric(diff_text) > 0) {
+      zoneName <- paste("Etc/GMT+", as.numeric(diff_text), sep="")
+    } else {
+      zoneName <- paste("Etc/GMT", as.numeric(diff_text), sep="")
+    }
   }
 
   bigData <- 10000
   if (N > bigData) {
     print(paste("found", N,"data values"))
   }
-  #if (N > bigData) { print("processing dateTime...")}
-  #dateTimeRaw <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
-
-  #DateTime <- as.POSIXct(strptime(dateTimeRaw, "%Y-%m-%dT%H:%M:%S"))
-  #DateTime <- as.POSIXct(dateTimeRaw, format="%Y-%m-%dT%H:%M:%S", tz=)
 
   if (N > bigData) { print("processing censorCode...") }
   censorCode = xpathSApply(doc, "//sr:value", xmlGetAttr, name="censorCode", namespaces=ns)
@@ -449,13 +448,26 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
       DateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
       DateTimeUTC <- as.POSIXct(DateTimeUTC, format="%Y-%m-%dT%H:%M:%S", tz="GMT")
       UTCOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
-      UTCOffset <- as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3))
+      UTCOffset <- ifelse(grepl(":", UTCOffset),
+                          as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3)),
+                          as.numeric(UTCOffset))
       utcDiff = as.difftime(UTCOffset, units="hours")
       DateTime = as.POSIXct(DateTimeUTC + utcDiff)
-      attr(DateTime, "tzone") <- paste("Etc/GMT+", UTCOffset[1], sep="")
+      if (UTCOffset > 0) {
+        attr(DateTime, "tzone") <- paste("Etc/GMT+", UTCOffset[1], sep="")
+      }
+      if (UTCOffset < 0) {
+        attr(DateTime, "tzone") <- paste("Etc/GMT", UTCOffset[1], sep="")
+      }
     } else {
       DateTime <- xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
-      zone <- paste("Etc/GMT+", as.numeric(diff_text), sep="")
+      zone="GMT"
+      if (as.numeric(diff_text) > 0) {
+        zone <- paste("Etc/GMT+", as.numeric(diff_text), sep="")
+      }
+      if (as.numeric(diff_text) < 0) {
+        zone <- paste("Etc/GMT", as.numeric(diff_text), sep="")
+      }
       DateTime <- as.POSIXct(DateTime, format="%Y-%m-%dT%H:%M:%S", tz=zone)
       UTCOffset = rep(as.numeric(diff_text), N)
       DateTimeUTC = DateTime - time_diff
