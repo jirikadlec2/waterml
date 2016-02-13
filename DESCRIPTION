@@ -1,11 +1,11 @@
 Package: WaterML
 Type: Package
 Title: Fetch and Analyze Data from WaterML or CUAHSI WaterOneFlow Web Service
-Version: 1.6.1
+Version: 1.6.2
 Authors@R: person("Jiri","Kadlec", email="jirikadlec2@gmail.com", role=c("aut", "cre"))
 Description: Lets you connect to any CUAHSI WaterOneFlow web service
-    from any hydroserver. To see list of available hydroservers, see http://
-    hiscentral.cuahsi.org. The package has five data download functions:
+    from any HydroServer. To see list of available HydroServers, see http://
+    hiscentral.cuahsi.org. The package has six data download functions:
     GetServices(): show all public HydroServers from the HIS Central Catalog.
     HISCentral_GetSites() and HISCentral_GetSeriesCatalog(): search for sites or
     time series from the HIS Central catalog based on geographic bounding box,
@@ -15,8 +15,8 @@ Description: Lets you connect to any CUAHSI WaterOneFlow web service
     available at the specific site. GetValues(): Given a site code, variable code,
     start time and endtime, fetch a data.frame of all the observation time series
     data values. The data.frame has two columns: time and DataValue. This function
-    has an optional "daily" parameter, you can set daily="max", daily="min" or
-    daily="mean" to get aggregated daily values. The GetValues function can also
+    has an optional "daily" parameter, you can set daily=max, daily=min, daily=mean
+    or daily=sum to get aggregated daily values. The GetValues function can also
     retrieve WaterML 1 or WaterML 2.0 data from a custom URL or from a local file.
     The package also has five data upload functions: AddSites(), AddVariables(),
     AddMethods(), AddSources(), and AddValues(). These functions can be used for
@@ -33,7 +33,6 @@ Imports:
 LazyData: true
 URL: https://github.com/jirikadlec2/waterml
 Suggests:
-    knitr,
-    RMarkDown
+    knitr
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
