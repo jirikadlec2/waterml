@@ -150,7 +150,7 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
     print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
 
     #in case of server error, print the error and exit
-    if (status.code == "server error") {
+    if (tolower(status.code) == "server error") {
       status <- http_status(response)$message
       print(status)
       attr(df, "download.time") <- download.time["elapsed"]
