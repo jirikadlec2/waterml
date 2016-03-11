@@ -219,6 +219,9 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     download.status <- status.code
     attr(df, "download.time") <- download.time
     attr(df, "download.status") <- download.status
+  } else {
+    download.time <- 0
+    download.status <- "success"
   }
 
   ######################################################
@@ -228,9 +231,11 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
 
   print("reading data values WaterML ...")
   doc <- NULL
+  status.code <- "xml error"
   err <- tryCatch({
     if (isFile) {
       doc <- xmlParseDoc(server)
+      status.code <- "success"
     } else {
       doc <- xmlParse(content(response, type="text", encoding="utf-8"))
     }
@@ -453,10 +458,10 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
                           as.numeric(UTCOffset))
       utcDiff = as.difftime(UTCOffset, units="hours")
       DateTime = as.POSIXct(DateTimeUTC + utcDiff)
-      if (UTCOffset > 0) {
+      if (UTCOffset[1] > 0) {
         attr(DateTime, "tzone") <- paste("Etc/GMT+", UTCOffset[1], sep="")
       }
-      if (UTCOffset < 0) {
+      if (UTCOffset[1] < 0) {
         attr(DateTime, "tzone") <- paste("Etc/GMT", UTCOffset[1], sep="")
       }
     } else {
