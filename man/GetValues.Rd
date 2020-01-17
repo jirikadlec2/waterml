@@ -67,10 +67,10 @@ then this time series doesn't have any available data for the selected time peri
 This function gets the time series data values from the WaterML web service
 }
 \examples{
-#example 1: Get Values from a known site and variable from RushValley server
-v1 <- GetValues("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL",
-           site="Ru5BMMA", variable="SRS_Nr_NDVI", startDate="2014-11-01", endDate="2014-11-02",
-           daily="max")
+#example 1: Get Values from a known site and variable from Ipswich River server.
+server <- "http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx?WSDL"
+v1 <- GetValues(server, site="IRWA:FB-BV", variable="IRWA:DO",
+                startDate="1999-01-01", endDate="1999-12-31")
 #example 2: Get values from an external REST URL (in this case the Provo USGS NWIS site id 10163000)
 url <- "http://waterservices.usgs.gov/nwis/dv/?format=waterml,1.1&sites=10163000&parameterCd=00060"
 v2 <- GetValues(url)
