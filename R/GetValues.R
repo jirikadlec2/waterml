@@ -240,8 +240,8 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
       doc <- xmlParse(response)
     }
   }, warning = function(w) {
-    print(paste("Error reading WaterML:", conditionMessage(e)))
-    attr(df, "parse.status") <- conditionMessage(e)
+    print(paste("Error reading WaterML:", conditionMessage(w)))
+    attr(df, "parse.status") <- conditionMessage(w)
     attr(df, "parse.time") <- 0
     return(df)
   }, error = function(e) {
