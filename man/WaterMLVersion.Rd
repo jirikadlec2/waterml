@@ -27,4 +27,3 @@ doc <- xmlParse(response)
 version <- WaterMLVersion(doc)
 }
 \keyword{WaterML}
-

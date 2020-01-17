@@ -40,4 +40,3 @@ This function gets the table of variables from the WaterML web service
 GetVariables("http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL")
 }
 \keyword{WaterML}
-

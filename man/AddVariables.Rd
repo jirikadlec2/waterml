@@ -60,4 +60,3 @@ added_variables <- AddVariables(server, username=user, password=pass,
                                 variables=my_variables)
 }
 \keyword{waterml}
-

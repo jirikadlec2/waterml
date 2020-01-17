@@ -4,7 +4,8 @@
 \alias{GetSites}
 \title{GetSites}
 \usage{
-GetSites(server, west = NULL, south = NULL, east = NULL, north = NULL)
+GetSites(server, west = NULL, south = NULL, east = NULL,
+  north = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .WSDL,
@@ -54,4 +55,3 @@ server <- "http://drought.usu.edu/usbrreservoirs/cuahsi_1_1.asmx?WSDL"
 sites_subset <- GetSites(server, west=-113.0, south=35.0, east=110.0, north=40.0)
 }
 \keyword{waterml}
-

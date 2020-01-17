@@ -4,8 +4,8 @@
 #'
 #' @import XML
 #' @param server The URL of the web service ending with .asmx or .wsdl,
-#'  for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL
-#' @param siteCode The full site code, for example: default:Ru5BMMA. To get a list of
+#'  for example: http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx?WSDL
+#' @param siteCode The full site code, for example: IRWA:FB-BV. To get a list of
 #' available site codes, see GetSites() function and use the FullSiteCode field.
 #' @return a data.frame of data values with the following columns:
 #' \tabular{lll}{
@@ -98,8 +98,11 @@
 #' @keywords waterml
 #' @export
 #' @examples
-#' server <- "http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx"
-#' siteInfo <- GetSiteInfo(server, siteCode="default:Ru5BMMA")
+#' server <- "http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx"
+#' siteInfo <- GetSiteInfo(server, siteCode="IRWA:FB-BV")
+#'
+#' server <- "http://hydroportal.cuahsi.org/SNOTEL/cuahsi_1_1.asmx"
+#' siteInfo <- GetSiteInfo(server, siteCode="SNOTEL:879")
 
 GetSiteInfo <- function(server, siteCode) {
 

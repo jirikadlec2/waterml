@@ -49,4 +49,3 @@ added_methods <- AddMethods(server, username=user, password=pass,
                                 methods=my_methods)
 }
 \keyword{waterml}
-

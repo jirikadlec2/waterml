@@ -65,4 +65,3 @@ status  <- AddValues(server, username=user, password=pass,
                      qualityControl=qualityID, values=my_values)
 }
 \keyword{WaterML}
-

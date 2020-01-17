@@ -8,9 +8,9 @@ GetSiteInfo(server, siteCode)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .asmx or .wsdl,
-for example: http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx?WSDL}
+for example: http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx?WSDL}
 
-\item{siteCode}{The full site code, for example: default:Ru5BMMA. To get a list of
+\item{siteCode}{The full site code, for example: IRWA:FB-BV. To get a list of
 available site codes, see GetSites() function and use the FullSiteCode field.}
 }
 \value{
@@ -107,8 +107,10 @@ If parse status is "NO_SERIES_FOUND", then this site doesn't have any available 
 This function gets the table variables measured at a specific site from the WaterML web service
 }
 \examples{
-server <- "http://worldwater.byu.edu/app/index.php/rushvalley/services/cuahsi_1_1.asmx"
-siteInfo <- GetSiteInfo(server, siteCode="default:Ru5BMMA")
+server <- "http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx"
+siteInfo <- GetSiteInfo(server, siteCode="IRWA:FB-BV")
+
+server <- "http://hydroportal.cuahsi.org/SNOTEL/cuahsi_1_1.asmx"
+siteInfo <- GetSiteInfo(server, siteCode="SNOTEL:879")
 }
 \keyword{waterml}
-

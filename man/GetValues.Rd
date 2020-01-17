@@ -4,9 +4,9 @@
 \alias{GetValues}
 \title{GetValues}
 \usage{
-GetValues(server, siteCode = NULL, variableCode = NULL, startDate = NULL,
-  endDate = NULL, methodID = NULL, sourceID = NULL, qcID = NULL,
-  daily = NULL)
+GetValues(server, siteCode = NULL, variableCode = NULL,
+  startDate = NULL, endDate = NULL, methodID = NULL,
+  sourceID = NULL, qcID = NULL, daily = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service,
@@ -82,4 +82,3 @@ waterml2_data$month <- strftime(waterml2_data$time, "\%M")
 waterml2_data$day <- strftime(waterml2_data$time, "\%d")
 }
 \keyword{waterml}
-

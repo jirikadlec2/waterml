@@ -61,4 +61,3 @@ This function searches the table of time series from the HIS Central catalog
 series_catalog <- HISCentral_GetSeriesCatalog(west=14.1, south=49.9, east=14.3, north=50.1)
 }
 \keyword{waterml}
-

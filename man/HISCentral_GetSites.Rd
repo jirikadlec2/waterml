@@ -4,8 +4,9 @@
 \alias{HISCentral_GetSites}
 \title{HISCentral_GetSites}
 \usage{
-HISCentral_GetSites(west = -180, south = -90, east = 180, north = 90,
-  serviceID = NULL, keyword = NULL, IncludeServerDetails = TRUE)
+HISCentral_GetSites(west = -180, south = -90, east = 180,
+  north = 90, serviceID = NULL, keyword = NULL,
+  IncludeServerDetails = TRUE)
 }
 \arguments{
 \item{west}{The west longitude of the geographic
@@ -55,4 +56,3 @@ This function gets the table of sites from the HIS Central catalog
 sites <- HISCentral_GetSites(west=14.1, south=49.8, east=14.6, north=50.2, serviceID=262)
 }
 \keyword{waterml}
-

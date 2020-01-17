@@ -60,4 +60,3 @@ added_sources <- AddSources(server, username=user, password=pass,
                                 sources=my_sources)
 }
 \keyword{waterml}
-

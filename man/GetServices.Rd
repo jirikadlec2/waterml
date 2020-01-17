@@ -13,4 +13,3 @@ This function gets the table of web services from the HIS Central catalog
 GetServices()
 }
 \keyword{waterml}
-

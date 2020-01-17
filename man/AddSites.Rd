@@ -49,4 +49,3 @@ my_sites <- data.frame(SiteCode=random_codes, SiteName=random_names,
 added_sites <- AddSites(server, username=user, password=pass, sites=my_sites)
 }
 \keyword{waterml}
-

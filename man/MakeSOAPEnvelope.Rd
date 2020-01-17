@@ -44,4 +44,3 @@ WaterML <- xmlParse(response)
 WaterML
 }
 \keyword{WaterML}
-
