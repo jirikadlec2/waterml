@@ -14,5 +14,5 @@
 #' @name WaterML-package
 #' @docType package
 #' @author Jiri Kadlec \email{jirikadlec2@@gmail.com}
-#' @keywords WaterML, HydroServer, CUAHSI, web services
+#' @keywords WaterML HydroServer CUAHSI Hydrology
 NULL
