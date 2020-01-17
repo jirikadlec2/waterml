@@ -20,8 +20,7 @@ Please see \url{https://github.com/jirikadlec2/waterml} for more information.
 \author{
 Jiri Kadlec \email{jirikadlec2@gmail.com}
 }
-\keyword{CUAHSI,}
-\keyword{HydroServer,}
-\keyword{WaterML,}
-\keyword{services}
-\keyword{web}
+\keyword{CUAHSI}
+\keyword{HydroServer}
+\keyword{Hydrology}
+\keyword{WaterML}

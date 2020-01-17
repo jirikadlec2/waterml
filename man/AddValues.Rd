@@ -4,8 +4,17 @@
 \alias{AddValues}
 \title{AddValues}
 \usage{
-AddValues(server, username, password, site, variable, methodID, sourceID,
-  qualityControl, values)
+AddValues(
+  server,
+  username,
+  password,
+  site,
+  variable,
+  methodID,
+  sourceID,
+  qualityControl,
+  values
+)
 }
 \arguments{
 \item{server}{The URL of the web service ending with /services or with ?wsdl,

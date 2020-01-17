@@ -4,9 +4,15 @@
 \alias{HISCentral_GetSites}
 \title{HISCentral_GetSites}
 \usage{
-HISCentral_GetSites(west = -180, south = -90, east = 180,
-  north = 90, serviceID = NULL, keyword = NULL,
-  IncludeServerDetails = TRUE)
+HISCentral_GetSites(
+  west = -180,
+  south = -90,
+  east = 180,
+  north = 90,
+  serviceID = NULL,
+  keyword = NULL,
+  IncludeServerDetails = TRUE
+)
 }
 \arguments{
 \item{west}{The west longitude of the geographic

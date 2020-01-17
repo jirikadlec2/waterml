@@ -4,8 +4,7 @@
 \alias{GetSites}
 \title{GetSites}
 \usage{
-GetSites(server, west = NULL, south = NULL, east = NULL,
-  north = NULL)
+GetSites(server, west = NULL, south = NULL, east = NULL, north = NULL)
 }
 \arguments{
 \item{server}{The URL of the web service ending with .WSDL,

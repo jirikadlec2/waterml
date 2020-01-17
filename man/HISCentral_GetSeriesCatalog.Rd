@@ -4,8 +4,16 @@
 \alias{HISCentral_GetSeriesCatalog}
 \title{HISCentral_GetSeriesCatalog}
 \usage{
-HISCentral_GetSeriesCatalog(west, south, east, north, serviceID = NULL,
-  keyword = NULL, beginDate = NULL, endDate = NULL)
+HISCentral_GetSeriesCatalog(
+  west,
+  south,
+  east,
+  north,
+  serviceID = NULL,
+  keyword = NULL,
+  beginDate = NULL,
+  endDate = NULL
+)
 }
 \arguments{
 \item{west}{The west longitude of the geographic
