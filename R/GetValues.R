@@ -240,19 +240,19 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
       doc <- xmlParse(response)
     }
   }, warning = function(w) {
-    print("Error reading WaterML: Bad XML format.")
-    attr(df, "parse.status") <- "Bad XML format"
+    print(paste("Error reading WaterML:", conditionMessage(e)))
+    attr(df, "parse.status") <- conditionMessage(e)
     attr(df, "parse.time") <- 0
     return(df)
   }, error = function(e) {
-    print("Error reading WaterML: Bad XML format.")
-    attr(df, "parse.status") <- "Bad XML format"
+    print(paste("Error reading WaterML:", conditionMessage(e)))
+    attr(df, "parse.status") <- conditionMessage(e)
     attr(df, "parse.time") <- 0
     return(df)
   })
   if (is.null(doc)) {
     print("Error reading WaterML: Bad XML format.")
-    attr(df, "parse.status") <- "Bad XML format"
+    attr(df, "parse.status") <- "XML parse error"
     attr(df, "parse.time") <- 0
     return(df)
   }

@@ -1,7 +1,7 @@
 Package: WaterML
 Type: Package
 Title: Fetch and Analyze Data from 'WaterML' and 'WaterOneFlow' Web Services
-Version: 1.8.1
+Version: 1.8.2
 Authors@R: person("Jiri","Kadlec", email="jirikadlec2@gmail.com", role=c("aut", "cre"))
 Description: Lets you connect to any of the Consortium of Universities for the Advancement
     of Hydrologic Sciences, Inc. ('CUAHSI') Water Data Center 'WaterOneFlow' web services
