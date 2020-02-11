@@ -3,8 +3,8 @@ Type: Package
 Title: Fetch and Analyze Data from 'WaterML' and 'WaterOneFlow' Web Services
 Version: 1.8.3
 Authors@R: person("Jiri","Kadlec", email="jirikadlec2@gmail.com", role=c("aut", "cre"))
-Description: Lets you connect to any of the 'Consortium of Universities for the Advancement
-    of Hydrologic Sciences, Inc.' ('CUAHSI') Water Data Center 'WaterOneFlow' web services
+Description: Lets you connect to any of the 'Consortium of Universities for the Advancement of Hydrological Science, Inc.' 
+    ('CUAHSI') Water Data Center 'WaterOneFlow' web services
     and read any 'WaterML' time series data file. To see list of available
     web services, see <http://hiscentral.cuahsi.org>. All versions of 'WaterML'
     (1.0, 1.1 and 2.0) and both types of the web service protocol ('SOAP' and 'REST') are supported.

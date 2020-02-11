@@ -107,9 +107,6 @@ If parse status is "NO_SERIES_FOUND", then this site doesn't have any available 
 This function gets the table variables measured at a specific site from the WaterML web service
 }
 \examples{
-server <- "http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx"
-siteInfo <- GetSiteInfo(server, siteCode="IRWA:FB-BV")
-
 server <- "http://hydroportal.cuahsi.org/SNOTEL/cuahsi_1_1.asmx"
 siteInfo <- GetSiteInfo(server, siteCode="SNOTEL:879")
 }

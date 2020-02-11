@@ -98,9 +98,6 @@
 #' @keywords waterml
 #' @export
 #' @examples
-#' server <- "http://hydroportal.cuahsi.org/ipswich/cuahsi_1_1.asmx"
-#' siteInfo <- GetSiteInfo(server, siteCode="IRWA:FB-BV")
-#'
 #' server <- "http://hydroportal.cuahsi.org/SNOTEL/cuahsi_1_1.asmx"
 #' siteInfo <- GetSiteInfo(server, siteCode="SNOTEL:879")
 
@@ -158,6 +155,7 @@ GetSiteInfo <- function(server, siteCode) {
         downloaded <- TRUE
         },error = function(e) {
           print(conditionMessage(e))
+          stop(e)
         }
       )
     )
@@ -184,6 +182,7 @@ GetSiteInfo <- function(server, siteCode) {
         downloaded <- TRUE
         },error = function(e) {
           print(conditionMessage(e))
+          stop(e)
         }
       )
     )
