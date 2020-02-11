@@ -147,9 +147,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
         status <- http_status(response)$message
         downloaded <- TRUE
       },error = function(e) {
-        print(conditionMessage(e))
-        # If download has failed then exit function and stop.
-        stop(e)
+        warning(conditionMessage(e))
       }
       )
     )
@@ -187,8 +185,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
           status <- http_status(response)$message
           downloaded <- TRUE
         },error = function(e) {
-          print(conditionMessage(e))
-          stop(e)
+          warning(conditionMessage(e))
         }
         )
       )
@@ -234,7 +231,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
 
   print("reading data values WaterML ...")
   doc <- NULL
-  status.code <- "xml error"
+  status.code <- "xml parse error"
   err <- tryCatch({
     if (isFile) {
       doc <- xmlParseDoc(server)
@@ -243,18 +240,18 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
       doc <- xmlParse(response)
     }
   }, warning = function(w) {
-    print(paste("Error reading WaterML:", conditionMessage(w)))
+    warning(paste("Error reading WaterML:", conditionMessage(w)))
     attr(df, "parse.status") <- conditionMessage(w)
     attr(df, "parse.time") <- 0
     return(df)
   }, error = function(e) {
-    print(paste("Error reading WaterML:", conditionMessage(e)))
+    warning(paste("Error reading WaterML:", conditionMessage(e)))
     attr(df, "parse.status") <- conditionMessage(e)
     attr(df, "parse.time") <- 0
     return(df)
   })
   if (is.null(doc)) {
-    print("Error reading WaterML: Bad XML format.")
+    warning("WaterML data from the GetValues response could not be parsed.")
     attr(df, "parse.status") <- "XML parse error"
     attr(df, "parse.time") <- 0
     return(df)

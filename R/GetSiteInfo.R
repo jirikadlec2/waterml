@@ -154,8 +154,7 @@ GetSiteInfo <- function(server, siteCode) {
         status <- http_status(response)$message
         downloaded <- TRUE
         },error = function(e) {
-          print(conditionMessage(e))
-          stop(e)
+          warning(conditionMessage(e))
         }
       )
     )
@@ -181,8 +180,7 @@ GetSiteInfo <- function(server, siteCode) {
         status <- http_status(response)$message
         downloaded <- TRUE
         },error = function(e) {
-          print(conditionMessage(e))
-          stop(e)
+          warning(conditionMessage(e))
         }
       )
     )
@@ -215,7 +213,7 @@ GetSiteInfo <- function(server, siteCode) {
   #try to find faultstring to look for an error
   fault <- xpathSApply(doc, "//soap:Fault", xmlValue, namespaces=ns)
   if (length(fault) > 0) {
-    print(paste("SERVER ERROR in GetSiteInfo ", as.character(fault), sep=":"))
+    warning(paste("SERVER ERROR in GetSiteInfo ", as.character(fault), sep=":"))
     attr(df, "download.time") <- download.time["elapsed"]
     attr(df, "download.status") <- as.character(fault)
     attr(df, "parse.time") <- NA
