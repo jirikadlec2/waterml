@@ -148,6 +148,8 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
         downloaded <- TRUE
       },error = function(e) {
         print(conditionMessage(e))
+        # If download has failed then exit function and stop.
+        stop(e)
       }
       )
     )
@@ -186,6 +188,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
           downloaded <- TRUE
         },error = function(e) {
           print(conditionMessage(e))
+          stop(e)
         }
         )
       )
