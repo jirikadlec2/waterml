@@ -449,22 +449,25 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     #if defaultTimeZone is not specified, then read it for each value
     if (N > bigData) { print("processing dateTimeUTC...") }
 
-    if (is.null(time_diff)) {
-      DateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
+    DateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
+    if (is.null(unlist(DateTimeUTC))) {
+      dime_diff <- 0
+    }
 
-      DateTimeUTC <- tryCatch({
-        return(as.POSIXct(DateTimeUTC, format="%Y-%m-%dT%H:%M:%S", tz="GMT"))
-      },error = function(e) {
-        warning("WaterML does not have expected attribute DateTimeUTC.")
-        LocalDateTime = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
-        return(as.POSIXct(LocalDateTime, format="%Y-%m-%dT%H:%M:%S", tz="GMT"))
-      })
+    if (is.null(time_diff)) {
+      DateTimeUTC <- as.POSIXct(DateTimeUTC, format="%Y-%m-%dT%H:%M:%S", tz="GMT")
 
       UTCOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
-      UTCOffset <- ifelse(grepl(":", UTCOffset),
-                          as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3)),
-                          as.numeric(UTCOffset))
-      utcDiff = as.difftime(UTCOffset, units="hours")
+      if (is.null(unlist(UTCOffset))) { utcDiff <- 0 }
+
+      if (utcDiff != 0) {
+        UTCOffset <- ifelse(grepl(":", UTCOffset),
+                            as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3)),
+                            as.numeric(UTCOffset))
+        utcDiff = as.difftime(UTCOffset, units="hours")
+      } else {
+        utcDiff = as.difftime(0, units="hours")
+      }
       DateTime = as.POSIXct(DateTimeUTC + utcDiff)
       if (UTCOffset[1] > 0) {
         attr(DateTime, "tzone") <- paste("Etc/GMT+", UTCOffset[1], sep="")
