@@ -168,7 +168,7 @@ GetSiteInfo <- function(server, siteCode) {
 
     status.code <- http_status(response)$category
 
-    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
+    print(paste("download time:", round(download.time["elapsed"], 1), "seconds, status:", status.code))
 
   } else {
     #if the service is REST

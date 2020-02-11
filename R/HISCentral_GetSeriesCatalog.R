@@ -89,7 +89,7 @@ HISCentral_GetSeriesCatalog <- function(west, south, east, north,
   }
 
   status.code <- http_status(response)$category
-  print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
+  print(paste("download time:", round(download.time["elapsed"], 1), "seconds, status:", status.code))
 
   ######################################################
   # Parsing the WaterML XML Data                       #

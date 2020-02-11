@@ -160,7 +160,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     }
 
     status.code <- http_status(response)$category
-    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
+    print(paste("download time:", round(download.time["elapsed"], 1), "seconds, status:", status.code))
     # check for bad status code
     if (tolower(status.code) != "success") {
       status.message <- http_status(response)$message
@@ -451,22 +451,21 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
 
     DateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
     if (is.null(unlist(DateTimeUTC))) {
-      dime_diff <- 0
+      time_diff <- 0
+      diff_text <- "0"
     }
 
     if (is.null(time_diff)) {
       DateTimeUTC <- as.POSIXct(DateTimeUTC, format="%Y-%m-%dT%H:%M:%S", tz="GMT")
 
       UTCOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
-      if (is.null(unlist(UTCOffset))) { utcDiff <- 0 }
-
-      if (utcDiff != 0) {
+      if (is.null(unlist(UTCOffset))) {
+        utcDiff = as.difftime(0, units="hours")
+      } else {
         UTCOffset <- ifelse(grepl(":", UTCOffset),
                             as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3)),
                             as.numeric(UTCOffset))
         utcDiff = as.difftime(UTCOffset, units="hours")
-      } else {
-        utcDiff = as.difftime(0, units="hours")
       }
       DateTime = as.POSIXct(DateTimeUTC + utcDiff)
       if (UTCOffset[1] > 0) {

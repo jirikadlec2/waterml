@@ -148,7 +148,7 @@ GetSites <- function(server, west=NULL, south=NULL, east=NULL, north=NULL) {
 
     status.code <- http_status(response)$category
 
-    print(paste("download time:", download.time["elapsed"], "seconds, status:", status.code))
+    print(paste("download time:", round(download.time["elapsed"], 0), "seconds, status:", status.code))
 
     #in case of server error, print the error and exit
     if (tolower(status.code) == "server error") {
