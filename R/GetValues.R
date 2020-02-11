@@ -452,7 +452,14 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
     if (is.null(time_diff)) {
       DateTimeUTC = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTimeUTC", namespaces=ns)
 
-      DateTimeUTC <- as.POSIXct(DateTimeUTC, format="%Y-%m-%dT%H:%M:%S", tz="GMT")
+      DateTimeUTC <- tryCatch({
+        return(as.POSIXct(DateTimeUTC, format="%Y-%m-%dT%H:%M:%S", tz="GMT"))
+      },error = function(e) {
+        warning("WaterML does not have expected attribute DateTimeUTC.")
+        LocalDateTime = xpathSApply(doc, "//sr:value", xmlGetAttr, name="dateTime", namespaces=ns)
+        return(as.POSIXct(LocalDateTime, format="%Y-%m-%dT%H:%M:%S", tz="GMT"))
+      })
+
       UTCOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
       UTCOffset <- ifelse(grepl(":", UTCOffset),
                           as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3)),
