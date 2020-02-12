@@ -18,7 +18,7 @@ GetServices <- function() {
       response <- GET(url)
       downloaded <- TRUE
     },error=function(e){
-      print(conditionMessage(e))
+      warning(conditionMessage(e))
     })
   )
 
@@ -33,10 +33,10 @@ GetServices <- function() {
   doc <- tryCatch({
     xmlParse(response)
   }, warning = function(w) {
-    print("Error reading HIS Central Data: Bad XML format.")
+    warning("Error reading HIS Central Data: Bad XML format.")
     return(NULL)
   }, error = function(e) {
-    print("Error reading HIS Central Data: Bad XML format.")
+    warning("Error reading HIS Central Data: Bad XML format.")
     return(NULL)
   }
   )
