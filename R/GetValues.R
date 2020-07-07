@@ -462,7 +462,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
       UTCOffset = xpathSApply(doc, "//sr:value", xmlGetAttr, name="timeOffset", namespaces=ns)
 
       if (is.null(unlist(UTCOffset))) {
-        utcDiff = as.difftime(0, units="hours")
+        utcDiff = rep(as.difftime(0, units="hours"), N)
       } else {
         UTCOffset <- ifelse(grepl(":", UTCOffset),
                             as.numeric(substr(UTCOffset, nchar(UTCOffset)-4, nchar(UTCOffset)-3)),
@@ -470,7 +470,7 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
         utcDiff = as.difftime(UTCOffset, units="hours")
       }
       DateTime = as.POSIXct(DateTimeUTC + utcDiff)
-      if (utcDiff == 0) {
+      if (utcDiff[1] == 0) {
         attr(DateTime, "tzone") <- "Etc/GMT"
         UTCOffset = rep(0, N)
       } else {
