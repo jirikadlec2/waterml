@@ -1,7 +1,7 @@
 Package: WaterML
 Type: Package
 Title: Fetch and Analyze Data from 'WaterML' and 'WaterOneFlow' Web Services
-Version: 1.9.4
+Version: 1.9.6
 Authors@R: person("Jiri","Kadlec", email="jirikadlec2@gmail.com", role=c("aut", "cre"))
 Description: Lets you connect to any of the 'Consortium of Universities for the Advancement of Hydrological Science, Inc.' 
     ('CUAHSI') Water Data Center 'WaterOneFlow' web services
@@ -31,6 +31,8 @@ LazyData: true
 URL: https://github.com/jirikadlec2/waterml
 Suggests:
     knitr,
-    qpdf
+    markdown,
+    qpdf,
+    rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 7.0.2
