@@ -295,9 +295,14 @@ GetValues <- function(server, siteCode=NULL, variableCode=NULL, startDate=NULL, 
         xp <- xp[-1]
       }
 
+      # allow for the case where optional <wml2:metadata> appears within <wml2:MeasurementTVP>
+      if(length(xp) > 0){
+        numElements = length(names(xp[[1]]))
+      }
+      
       xp2 <- unlist(xp)
-      xpTimes <- xp2[seq(1, length(xp2), 2)]
-      xpVals <- xp2[seq(2, length(xp2), 2)]
+      xpTimes <- xp2[seq(1, length(xp2), numElements)]
+      xpVals <- xp2[seq(2, length(xp2), numElements)]
 
       DF2 <- data.frame(time=xpTimes, value=xpVals, stringsAsFactors = FALSE)
 
